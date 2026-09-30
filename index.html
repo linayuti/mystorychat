@@ -260,10 +260,18 @@ placeholder="Напишите свой ответ..."
 
 <script>
 
+
 const story = document.getElementById("story");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
 
+let step = 0;
+let chapterFinished = false;
+
+
+/* =========================
+   ДОБАВЛЕНИЕ СООБЩЕНИЯ ИГРОКА
+========================= */
 
 function addUserMessage(text) {
 
@@ -276,17 +284,24 @@ function addUserMessage(text) {
 
     <div class="dialogue-text">
       <div class="name">Вы</div>
-      <div></div>
+      <div class="user-text"></div>
     </div>
   `;
 
-  message.querySelector(".dialogue-text div:last-child").textContent = text;
+  message.querySelector(".user-text").textContent = text;
 
   story.appendChild(message);
 
-  story.scrollTop = story.scrollHeight;
+  message.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 }
 
+
+/* =========================
+   СООБЩЕНИЕ ПЕРСОНАЖА
+========================= */
 
 function addCharacterMessage(name, text) {
 
@@ -299,74 +314,402 @@ function addCharacterMessage(name, text) {
 
     <div class="dialogue-text">
       <div class="name"></div>
-      <div></div>
+      <div class="character-text"></div>
     </div>
   `;
 
   message.querySelector(".name").textContent = name;
-
-  message.querySelector(".dialogue-text div:last-child").textContent = text;
+  message.querySelector(".character-text").textContent = text;
 
   story.appendChild(message);
 
-  story.scrollTop = story.scrollHeight;
+  message.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 }
 
 
-/*
-  ВРЕМЕННАЯ СИСТЕМА ОТВЕТОВ.
+/* =========================
+   ТЕКСТ ОТ АВТОРА
+========================= */
 
-  Позже мы заменим её полноценным сценарием,
-  когда будем собирать всю главу.
-*/
+function addNarrator(text) {
 
-function getAnswer(text) {
+  const message = document.createElement("div");
+
+  message.className = "narrator";
+
+  message.textContent = text;
+
+  story.appendChild(message);
+
+  message.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+
+/* =========================
+   ПЕРВАЯ СЦЕНА
+========================= */
+
+function firstResponse(text) {
 
   const t = text.toLowerCase();
 
   if (
-    t.includes("кто ты") ||
-    t.includes("кто там") ||
-    t.includes("слышишь")
+    t.includes("кто") ||
+    t.includes("ты") ||
+    t.includes("слыш")
   ) {
-    return [
-      "Радиоприёмник",
-      "— Я слышу вас. Наконец-то..."
-    ];
+
+    return {
+      name: "Радиоприёмник",
+      text: "— Да. Я слышу вас."
+    };
+
+  }
+
+  if (
+    t.includes("помощ") ||
+    t.includes("спас") ||
+    t.includes("опас")
+  ) {
+
+    return {
+      name: "Радиоприёмник",
+      text: "— Если вам нужна помощь... вы уже опоздали."
+    };
+
+  }
+
+  return {
+    name: "Радиоприёмник",
+    text: "— Наконец-то кто-то ответил."
+  };
+}
+
+
+/* =========================
+   ВТОРАЯ СЦЕНА
+========================= */
+
+function secondResponse(text) {
+
+  const t = text.toLowerCase();
+
+  if (
+    t.includes("выключ") ||
+    t.includes("уйти") ||
+    t.includes("уходим")
+  ) {
+
+    return {
+      name: "Макс",
+      text: "— Подожди. Мы только вошли. Давай сначала разберёмся, что это за место."
+    };
+
   }
 
   if (
     t.includes("радио") ||
-    t.includes("приёмник") ||
-    t.includes("приемник")
+    t.includes("сигнал") ||
+    t.includes("частот")
   ) {
-    return [
-      "Радиоприёмник",
-      "— Не выключайте меня. Сигнал становится сильнее."
-    ];
+
+    return {
+      name: "Лера",
+      text: "— Странно... Сигнал идёт на частоте, которой здесь вообще не должно быть."
+    };
+
+  }
+
+  return {
+    name: "Макс",
+    text: "— Я бы не трогал этот приёмник. Он выглядит так, будто его не включали много лет."
+  };
+}
+
+
+/* =========================
+   ТРЕТЬЯ СЦЕНА
+========================= */
+
+function thirdResponse(text) {
+
+  const t = text.toLowerCase();
+
+  if (
+    t.includes("книга") ||
+    t.includes("бума") ||
+    t.includes("журнал") ||
+    t.includes("запис")
+  ) {
+
+    return {
+      name: "Соня",
+      text: "— Здесь есть записи. И они выглядят совсем свежими."
+    };
+
   }
 
   if (
-    t.includes("опас") ||
-    t.includes("страш") ||
-    t.includes("помощ")
+    t.includes("осмотр") ||
+    t.includes("посмотр") ||
+    t.includes("исслед") ||
+    t.includes("найти")
   ) {
-    return [
-      "Радиоприёмник",
-      "— Вам нужно быть осторожнее. Здесь что-то не так."
-    ];
+
+    return {
+      name: "Соня",
+      text: "— Тогда давайте осмотримся. Только не разбегаемся."
+    };
+
   }
 
-  return [
-    "Радиоприёмник",
-    "— Я услышал ваш ответ..."
-  ];
+  return {
+    name: "Соня",
+    text: "— Мне кажется, здесь кто-то был совсем недавно."
+  };
 }
 
+
+/* =========================
+   ЧЕТВЁРТАЯ СЦЕНА
+========================= */
+
+function fourthResponse(text) {
+
+  const t = text.toLowerCase();
+
+  if (
+    t.includes("имя") ||
+    t.includes("кто") ||
+    t.includes("человек")
+  ) {
+
+    return {
+      name: "Радиоприёмник",
+      text: "— Моё имя вам ничего не скажет."
+    };
+
+  }
+
+  if (
+    t.includes("зна") ||
+    t.includes("откуда") ||
+    t.includes("узнал")
+  ) {
+
+    return {
+      name: "Радиоприёмник",
+      text: "— Я знаю только то, что слышу."
+    };
+
+  }
+
+  return {
+    name: "Радиоприёмник",
+    text: "— Не задавайте этот вопрос здесь."
+  };
+}
+
+
+/* =========================
+   ПЯТАЯ СЦЕНА
+========================= */
+
+function fifthResponse(text) {
+
+  const t = text.toLowerCase();
+
+  if (
+    t.includes("знаком") ||
+    t.includes("имя") ||
+    t.includes("меня")
+  ) {
+
+    return {
+      name: "Радиоприёмник",
+      text: "— Конечно, я знаю, кто ты."
+    };
+
+  }
+
+  if (
+    t.includes("страш") ||
+    t.includes("бо")) {
+
+    return {
+      name: "Лера",
+      text: "— Я тоже начинаю чувствовать себя не очень хорошо."
+    };
+
+  }
+
+  return {
+    name: "Радиоприёмник",
+    text: "— Вы пришли сюда не случайно."
+  };
+}
+
+
+/* =========================
+   ШЕСТАЯ СЦЕНА
+========================= */
+
+function sixthResponse(text) {
+
+  const t = text.toLowerCase();
+
+  if (
+    t.includes("не приход") ||
+    t.includes("уйд") ||
+    t.includes("уходим")
+  ) {
+
+    return {
+      name: "Макс",
+      text: "— Согласен. Нам лучше выйти."
+    };
+
+  }
+
+  if (
+    t.includes("зачем") ||
+    t.includes("почему") ||
+    t.includes("пришли")
+  ) {
+
+    return {
+      name: "Радиоприёмник",
+      text: "— Потому что сигнал позвал именно вас."
+    };
+
+  }
+
+  return {
+    name: "Радиоприёмник",
+    text: "— Посмотрите на дверь."
+  };
+}
+
+
+/* =========================
+   СЕДЬМАЯ СЦЕНА
+========================= */
+
+function seventhResponse(text) {
+
+  return {
+    name: "Соня",
+    text: "— Ребята... дверь только что закрылась сама."
+  };
+}
+
+
+/* =========================
+   ВОСЬМАЯ СЦЕНА
+========================= */
+
+function eighthResponse(text) {
+
+  return {
+    name: "Радиоприёмник",
+    text: "— Теперь вы слышите меня полностью."
+  };
+}
+
+
+/* =========================
+   ФИНАЛ ГЛАВЫ
+========================= */
+
+function finishChapter() {
+
+  if (chapterFinished) return;
+
+  chapterFinished = true;
+
+  addNarrator(
+    "Радиоприёмник внезапно замолкает.\n\n" +
+    "В комнате становится совершенно тихо.\n\n" +
+    "А затем из глубины станции раздаётся звук шагов."
+  );
+
+  setTimeout(function() {
+
+    addNarrator(
+      "Продолжение следует..."
+    );
+
+    input.disabled = true;
+
+    const button = form.querySelector("button");
+
+    if (button) {
+      button.disabled = true;
+    }
+
+  }, 1200);
+}
+
+
+/* =========================
+   ГЛАВНАЯ СИСТЕМА
+========================= */
+
+function getResponse(text) {
+
+  step++;
+
+  if (step === 1) {
+    return firstResponse(text);
+  }
+
+  if (step === 2) {
+    return secondResponse(text);
+  }
+
+  if (step === 3) {
+    return thirdResponse(text);
+  }
+
+  if (step === 4) {
+    return fourthResponse(text);
+  }
+
+  if (step === 5) {
+    return fifthResponse(text);
+  }
+
+  if (step === 6) {
+    return sixthResponse(text);
+  }
+
+  if (step === 7) {
+    return seventhResponse(text);
+  }
+
+  if (step === 8) {
+    return eighthResponse(text);
+  }
+
+  return null;
+}
+
+
+/* =========================
+   ОТПРАВКА
+========================= */
 
 form.addEventListener("submit", function(event) {
 
   event.preventDefault();
+
+  if (chapterFinished) return;
 
   const text = input.value.trim();
 
@@ -378,17 +721,28 @@ form.addEventListener("submit", function(event) {
 
   setTimeout(function() {
 
-    const answer = getAnswer(text);
+    const answer = getResponse(text);
+
+    if (!answer) {
+
+      finishChapter();
+
+      return;
+    }
 
     addCharacterMessage(
-      answer[0],
-      answer[1]
+      answer.name,
+      answer.text
     );
 
-  }, 500);
+  }, 700);
 
 });
 
+
+/* =========================
+   ENTER = ОТПРАВИТЬ
+========================= */
 
 input.addEventListener("keydown", function(event) {
 
@@ -404,7 +758,7 @@ input.addEventListener("keydown", function(event) {
   }
 
 });
-
+  
 </script>
 
 </body>
