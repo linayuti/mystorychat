@@ -1,16 +1,411 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Глава 1 — Частота</title><style>*{box-sizing:border-box}body{margin:0;background:#080b10;color:#eef2f7;font-family:Arial,sans-serif}#app{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:18px}.scene{width:min(920px,100%);min-height:90vh;border:1px solid #26303d;border-radius:18px;overflow:hidden;background:#0d1219}.bg{min-height:90vh;padding:34px 24px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(#07101a55,#07101aee),url('assets/backgrounds/station.jpg') center/cover}.panel{background:#090d13e8;border:1px solid #34404f;border-radius:16px;padding:22px}h1{margin:0 0 10px;font-size:30px}.text{font-size:18px;line-height:1.55;white-space:pre-line}button{display:block;width:100%;margin-top:12px;padding:14px;border:1px solid #4b596a;border-radius:12px;background:#151d27;color:#fff;font-size:16px;text-align:left;cursor:pointer}button:hover{background:#202b39}.small{opacity:.7;font-size:13px;margin-top:14px}.media{margin-top:14px;width:100%;border-radius:10px}</style></head><body><div id="app"></div><script>
-const scenes={
-start:{title:'ГЛАВА 1 — «Частота»',text:'Четверо друзей приезжают к заброшенной военной станции со звуковыми вышками.\n\nМесто давно отключено от сети, но внутри всё ещё работает один старый прибор.\n\nИз динамика раздаётся короткий сигнал.',choices:[['Войти внутрь станции','inside'],['Сначала осмотреть вышки','towers']]},
-inside:{title:'Станция',text:'Дверь открывается с трудом. В коридоре темно, а на стене висит старая схема объекта.\n\nГде-то впереди слышится тихое потрескивание.',choices:[['Идти на звук','signal'],['Изучить схему','map']]},
-towers:{title:'Вышки',text:'Одна из вышек выглядит повреждённой. На земле лежит старый блок управления.\n\nНа нём мигает красный индикатор.',choices:[['Поднять блок управления','block'],['Вернуться к станции','inside']]},
-signal:{title:'Частота',text:'Звук становится громче. На старом терминале появляется частота: 17.04.\n\nЗатем терминал выводит одно слово: «СЛУШАЙ».',choices:[['Нажать кнопку воспроизведения','voice'],['Остановиться и позвать остальных','friends']]},
-map:{title:'Схема',text:'На схеме отмечена подземная часть станции, которой нет на современных планах.\n\nРядом стоит пометка: «Доступ только при активной частоте».',choices:[['Искать вход вниз','basement'],['Вернуться к терминалу','signal']]},
-block:{title:'Блок управления',text:'После подключения блока слышится короткий голосовой фрагмент.\n\nПохоже, это запись, сделанная много лет назад.',audio:'assets/audio/recording1.mp3',choices:[['Послушать запись ещё раз','voice'],['Отнести блок внутрь','inside']]},
-friends:{title:'Не одни',text:'Остальные подходят к коридору. Теперь сигнал слышат все.\n\nНа секунду свет гаснет — и включается сам старый терминал.',choices:[['Подойти к терминалу','voice'],['Проверить выход','exit']]},
-voice:{title:'Запись',text:'В динамике звучит искажённый голос. Слова почти невозможно разобрать.\n\nПосле записи на экране появляется: «ЧАСТОТА ПРИНЯТА».',audio:'assets/audio/voice1.mp3',choices:[['Продолжить','basement'],['Сохранить запись и выйти','exit']]},
-basement:{title:'Под землёй',text:'За стеной обнаруживается скрытая лестница. Внизу — помещение с аппаратурой, которая не должна работать без электричества.\n\nНа центральном экране появляется схема четырёх сигналов.',choices:[['Коснуться экрана','end'],['Не трогать оборудование','exit']]},
-exit:{title:'Снаружи',text:'Вы выходите из станции. Сигнал стихает, но на телефоне остаётся сохранённая запись.\n\nЧерез несколько секунд телефон снова издаёт тот же самый звук.',choices:[['Посмотреть запись','end']]},
-end:{title:'Продолжение следует…',text:'Вы нашли только часть ответа.\n\nСигнал всё ещё существует — и теперь он знает, что вы его услышали.',choices:[]}
-};
-let scene=localStorage.getItem('chastota_scene')||'start';function render(){const s=scenes[scene];document.getElementById('app').innerHTML=`<main class="scene"><section class="bg"><div class="panel"><h1>${s.title}</h1><div class="text">${s.text}</div>${s.audio?`<audio class="media" controls src="${s.audio}"></audio>`:''}<div id="choices"></div><div class="small">Выборы сохраняются автоматически.</div></div></section></main>`;const c=document.getElementById('choices');s.choices.forEach(([label,next])=>{const b=document.createElement('button');b.textContent=label;b.onclick=()=>{scene=next;localStorage.setItem('chastota_scene',scene);render()};c.appendChild(b)})}render();
-</script></body></html>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Частота</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #080b12;
+  color: #eeeeee;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.game {
+  max-width: 900px;
+  min-height: 100vh;
+  margin: auto;
+  background: #0c111a;
+}
+
+header {
+  padding: 25px;
+  border-bottom: 1px solid #303a4b;
+}
+
+.chapter {
+  color: #8997aa;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 8px 0 0;
+  font-size: 40px;
+  font-weight: normal;
+}
+
+/* МЕСТО ДЛЯ СЦЕНЫ */
+.scene {
+  min-height: 300px;
+  padding: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #151d29;
+  border-bottom: 1px solid #303a4b;
+}
+
+.scene-placeholder {
+  width: 100%;
+  min-height: 240px;
+  border: 1px dashed #59677a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #8997aa;
+}
+
+/* ДИАЛОГИ */
+.story {
+  padding: 25px 20px;
+}
+
+.narrator {
+  max-width: 780px;
+  margin: 0 auto 25px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.dialogue {
+  max-width: 780px;
+  margin: 0 auto 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 55px;
+  height: 55px;
+  min-width: 55px;
+  border-radius: 50%;
+  border: 1px solid #536176;
+  background: #18202d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #69778b;
+  font-size: 9px;
+  text-align: center;
+}
+
+/* Здесь позже будут настоящие аватарки */
+
+.dialogue-text {
+  background: #121a25;
+  border-left: 3px solid #718198;
+  padding: 13px 16px;
+  border-radius: 0 10px 10px 0;
+  line-height: 1.6;
+}
+
+.name {
+  color: #aeb9c9;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ */
+
+.user-message {
+  max-width: 780px;
+  margin: 0 auto 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.user-message .avatar {
+  order: 2;
+}
+
+.user-message .dialogue-text {
+  order: 1;
+  background: #202b3b;
+  border-left: none;
+  border-right: 3px solid #718198;
+  border-radius: 10px 0 0 10px;
+  max-width: 75%;
+}
+
+/* ПРОДОЛЖЕНИЕ */
+
+.continue {
+  text-align: center;
+  margin: 60px 0 30px;
+  color: #b8c1cf;
+  letter-spacing: 1px;
+}
+
+/* ПОЛЕ ВВОДА */
+
+.input-area {
+  position: sticky;
+  bottom: 0;
+  padding: 15px;
+  background: #0d131d;
+  border-top: 1px solid #303a4b;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+}
+
+textarea {
+  flex: 1;
+  min-height: 55px;
+  resize: vertical;
+  background: #080c13;
+  color: white;
+  border: 1px solid #3d4a5d;
+  border-radius: 12px;
+  padding: 14px;
+  font: inherit;
+  outline: none;
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 0 20px;
+  background: #e7eaf0;
+  color: #11151c;
+  font: inherit;
+}
+
+.note {
+  text-align: center;
+  color: #69778a;
+  font-size: 12px;
+  margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+<header>
+  <div class="chapter">Глава 1</div>
+  <h1>«Частота»</h1>
+</header>
+
+<!-- ЗДЕСЬ ПОТОМ БУДЕТ ФОН И ПЕРСОНАЖИ С ЭМОЦИЯМИ -->
+<section class="scene">
+  <div class="scene-placeholder">
+    Здесь позже будет изображение сцены
+  </div>
+</section>
+
+<section class="story" id="story">
+
+  <div class="narrator">
+Четверо друзей приезжают к заброшенной военной станции.
+
+Внутри давно нет электричества, но где-то в глубине здания слышится слабый радиосигнал.
+
+На старом столе стоит радиоприёмник.
+
+Внезапно он загорается.
+  </div>
+
+  <div class="dialogue">
+    <div class="avatar">АВАТАРКА</div>
+
+    <div class="dialogue-text">
+      <div class="name">Радиоприёмник</div>
+      — ...если кто-нибудь меня слышит... ответьте...
+    </div>
+  </div>
+
+</section>
+
+<div class="input-area">
+
+<form id="form">
+
+<textarea
+id="input"
+placeholder="Напишите свой ответ..."
+></textarea>
+
+<button type="submit">
+Отправить
+</button>
+
+</form>
+
+<div class="note">
+Можно писать своими словами. Готовых вариантов нет.
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const story = document.getElementById("story");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+
+function addUserMessage(text) {
+
+  const message = document.createElement("div");
+
+  message.className = "user-message";
+
+  message.innerHTML = `
+    <div class="avatar">ВАША<br>АВАТАРКА</div>
+
+    <div class="dialogue-text">
+      <div class="name">Вы</div>
+      <div></div>
+    </div>
+  `;
+
+  message.querySelector(".dialogue-text div:last-child").textContent = text;
+
+  story.appendChild(message);
+
+  story.scrollTop = story.scrollHeight;
+}
+
+
+function addCharacterMessage(name, text) {
+
+  const message = document.createElement("div");
+
+  message.className = "dialogue";
+
+  message.innerHTML = `
+    <div class="avatar">АВАТАРКА</div>
+
+    <div class="dialogue-text">
+      <div class="name"></div>
+      <div></div>
+    </div>
+  `;
+
+  message.querySelector(".name").textContent = name;
+
+  message.querySelector(".dialogue-text div:last-child").textContent = text;
+
+  story.appendChild(message);
+
+  story.scrollTop = story.scrollHeight;
+}
+
+
+/*
+  ВРЕМЕННАЯ СИСТЕМА ОТВЕТОВ.
+
+  Позже мы заменим её полноценным сценарием,
+  когда будем собирать всю главу.
+*/
+
+function getAnswer(text) {
+
+  const t = text.toLowerCase();
+
+  if (
+    t.includes("кто ты") ||
+    t.includes("кто там") ||
+    t.includes("слышишь")
+  ) {
+    return [
+      "Радиоприёмник",
+      "— Я слышу вас. Наконец-то..."
+    ];
+  }
+
+  if (
+    t.includes("радио") ||
+    t.includes("приёмник") ||
+    t.includes("приемник")
+  ) {
+    return [
+      "Радиоприёмник",
+      "— Не выключайте меня. Сигнал становится сильнее."
+    ];
+  }
+
+  if (
+    t.includes("опас") ||
+    t.includes("страш") ||
+    t.includes("помощ")
+  ) {
+    return [
+      "Радиоприёмник",
+      "— Вам нужно быть осторожнее. Здесь что-то не так."
+    ];
+  }
+
+  return [
+    "Радиоприёмник",
+    "— Я услышал ваш ответ..."
+  ];
+}
+
+
+form.addEventListener("submit", function(event) {
+
+  event.preventDefault();
+
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  addUserMessage(text);
+
+  input.value = "";
+
+  setTimeout(function() {
+
+    const answer = getAnswer(text);
+
+    addCharacterMessage(
+      answer[0],
+      answer[1]
+    );
+
+  }, 500);
+
+});
+
+
+input.addEventListener("keydown", function(event) {
+
+  if (
+    event.key === "Enter" &&
+    !event.shiftKey
+  ) {
+
+    event.preventDefault();
+
+    form.requestSubmit();
+
+  }
+
+});
+
+</script>
+
+</body>
+  </html>
