@@ -2,6 +2,1874 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Частота — интерактивная история</title>
+
+<style>
+:root {
+    --bg: #10111c;
+    --panel: #191b2b;
+    --panel2: #22243a;
+    --text: #f3f2ff;
+    --muted: #a9abc6;
+    --accent: #9a83ff;
+    --accent2: #6754d9;
+    --border: #363650;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid #b5a7ff;
+    outline-offset: 2px;
+}
+
+.app {
+    width: 100%;
+    max-width: 1200px;
+    min-height: 100vh;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 245px minmax(0, 1fr);
+    background: var(--bg);
+}
+
+.sidebar {
+    padding: 20px 15px;
+    background: #151625;
+    border-right: 1px solid var(--border);
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: bold;
+    color: #c4b8ff;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin: 22px 0 12px;
+}
+
+.character {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px;
+    margin-bottom: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #423b70, #252c48);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 12px;
+    color: #dcd5ff;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.character-name {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.character-role {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.progress-track {
+    width: 100%;
+    height: 7px;
+    background: #303148;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-bar {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #7563df, #b4a2ff);
+    transition: width .3s;
+}
+
+.progress-text {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.sidebar-buttons {
+    display: grid;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.btn {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: var(--text);
+    background: var(--panel2);
+    transition: background .2s;
+}
+
+.btn:hover {
+    background: #30314b;
+}
+
+.btn.primary {
+    background: var(--accent2);
+    border-color: var(--accent2);
+}
+
+.btn.primary:hover {
+    background: #7866e9;
+}
+
+.main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.topbar {
+    padding: 14px 20px;
+    background: #151625;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.topbar-title {
+    font-weight: bold;
+}
+
+.topbar-small {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.sound-toggle {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 9px 12px;
+    white-space: nowrap;
+}
+
+.story-banner {
+    min-height: 190px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(0deg, rgba(10, 11, 24, .95), rgba(15, 17, 36, .15)),
+        linear-gradient(135deg, #22294a, #39305d, #17283d);
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+}
+
+.story-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(10, 11, 24, .45), transparent);
+    pointer-events: none;
+}
+
+.banner-content {
+    position: relative;
+    z-index: 1;
+}
+
+.location-label {
+    display: inline-block;
+    color: #d8d0ff;
+    background: rgba(30, 25, 65, .75);
+    border: 1px solid rgba(196, 184, 255, .3);
+    border-radius: 20px;
+    padding: 6px 10px;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.scene-title {
+    font-size: clamp(23px, 4vw, 32px);
+    margin: 0 0 8px;
+}
+
+.scene-description {
+    color: #deddf2;
+    max-width: 700px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.banner-hint {
+    font-size: 11px;
+    color: #b9b5d4;
+    margin-top: 12px;
+}
+
+.chat-area {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.system-message {
+    align-self: center;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 8px 12px;
+    max-width: 90%;
+}
+
+.message {
+    display: flex;
+    gap: 10px;
+    max-width: 88%;
+    align-items: flex-start;
+}
+
+.message.me {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #333454;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #e0dcff;
+    font-size: 11px;
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message-content {
+    min-width: 0;
+}
+
+.message-name {
+    color: var(--muted);
+    font-size: 11px;
+    margin: 0 0 5px 3px;
+}
+
+.message.me .message-name {
+    text-align: right;
+}
+
+.bubble {
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 5px 15px 15px 15px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.message.me .bubble {
+    background: #37305f;
+    border-color: #51448c;
+    border-radius: 15px 5px 15px 15px;
+}
+
+.composer {
+    padding: 15px 18px;
+    background: #151625;
+    border-top: 1px solid var(--border);
+}
+
+.composer-form {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+}
+
+.composer input {
+    min-width: 0;
+    flex: 1;
+    padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    background: #202136;
+}
+
+.composer input::placeholder {
+    color: #9092ad;
+}
+
+.send-button {
+    border: none;
+    border-radius: 12px;
+    padding: 13px 17px;
+    color: white;
+    background: var(--accent2);
+}
+
+.send-button:hover {
+    background: #7866e9;
+}
+
+.composer-note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.bottom-bar {
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    background: #121321;
+}
+
+.bottom-bar .btn {
+    flex: 1;
+}
+
+.choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.choice-button {
+    border: 1px solid #5c4e99;
+    background: #292342;
+    color: #e5dfff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: left;
+}
+
+.choice-button:hover {
+    background: #39305f;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.volume-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.volume-row input {
+    min-width: 0;
+    width: 100%;
+}
+
+.status-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 12px;
+}
+
+@media (max-width: 760px) {
+    .app {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 12px;
+    }
+
+    .logo {
+        font-size: 20px;
+    }
+
+    .subtitle {
+        margin-bottom: 10px;
+    }
+
+    .sidebar .section-title {
+        margin: 12px 0 8px;
+    }
+
+    .characters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .character {
+        margin: 0;
+        padding: 7px;
+        gap: 7px;
+    }
+
+    .avatar {
+        width: 34px;
+        height: 34px;
+    }
+
+    .character-name {
+        font-size: 12px;
+    }
+
+    .character-role {
+        font-size: 10px;
+    }
+
+    .sidebar-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .main {
+        min-height: 70vh;
+    }
+
+    .story-banner {
+        min-height: 170px;
+        padding: 18px;
+    }
+
+    .chat-area {
+        padding: 14px 10px;
+    }
+
+    .message {
+        max-width: 96%;
+    }
+
+    .composer {
+        padding: 10px;
+    }
+
+    .composer-form {
+        gap: 6px;
+    }
+
+    .send-button {
+        padding: 13px;
+    }
+
+    .bottom-bar {
+        padding: 10px;
+    }
+
+    .bottom-bar .btn {
+        font-size: 12px;
+        padding: 9px 6px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="sidebar">
+        <div class="logo">ЧАСТОТА</div>
+        <div class="subtitle">Интерактивная история</div>
+
+        <div class="section-title">Персонажи</div>
+
+        <div class="characters">
+            <div class="character">
+                <div class="avatar">
+                    <img src="images/lina.png" alt="Лина"
+                         onerror="this.style.display='none'">
+                    <span>Л</span>
+                </div>
+                <div>
+                    <div class="character-name">Лина</div>
+                    <div class="character-role">Главная героиня</div>
+                </div>
+            </div>
+
+            <div class="character">
+                <div class="avatar">
+                    <img src="images/mark.png" alt="Марк"
+                         onerror="this.style.display='none'">
+                    <span>М</span>
+                </div>
+                <div>
+                    <div class="character-name">Марк</div>
+                    <div class="character-role">Друг Лины</div>
+                </div>
+            </div>
+
+            <div class="character">
+                <div class="avatar">
+                    <img src="images/anya.png" alt="Аня"
+                         onerror="this.style.display='none'">
+                    <span>А</span>
+                </div>
+                <div>
+                    <div class="character-name">Аня</div>
+                    <div class="character-role">Подруга Лины</div>
+                </div>
+            </div>
+
+            <div class="character">
+                <div class="avatar">
+                    <img src="images/kirill.png" alt="Кирилл"
+                         onerror="this.style.display='none'">
+                    <span>К</span>
+                </div>
+                <div>
+                    <div class="character-name">Кирилл</div>
+                    <div class="character-role">Знает больше, чем говорит</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Прогресс истории</div>
+        <div class="progress-track">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">Сцена 1 из 30</div>
+
+        <div class="section-title">Настройки звука</div>
+        <button class="btn" id="soundButton" type="button">
+            🔊 Звуки включены
+        </button>
+
+        <div class="volume-row">
+            <label for="volume">Громкость</label>
+            <input id="volume" type="range"
+                   min="0" max="100" value="60">
+        </div>
+
+        <div class="status-note">
+            Звуковые файлы пока не добавлены. Позже помести их в папку
+            audio и подключи в настройках звуков в коде.
+        </div>
+
+        <div class="sidebar-buttons">
+            <button class="btn" id="saveButton" type="button">
+                💾 Сохранить
+            </button>
+            <button class="btn" id="restartButton" type="button">
+                ↻ Начать заново
+            </button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <div class="topbar-title">Частота</div>
+                <div class="topbar-small">Глава 1 · Незнакомый сигнал</div>
+            </div>
+            <button class="sound-toggle" id="topSoundButton"
+                    type="button">🔊 Звук</button>
+        </header>
+
+        <section class="story-banner" id="storyBanner"
+                 role="button" tabindex="0"
+                 aria-label="Продолжить историю">
+            <div class="banner-content">
+                <div class="location-label" id="locationLabel">
+                    Берег моря
+                </div>
+                <h1 class="scene-title" id="sceneTitle">
+                    Частота
+                </h1>
+                <p class="scene-description" id="sceneDescription">
+                    Вечер. Море кажется непривычно тихим.
+                </p>
+                <div class="banner-hint">
+                    Нажми на область истории, чтобы продолжить диалог
+                </div>
+            </div>
+        </section>
+
+        <section class="chat-area" id="chatArea"
+                 aria-live="polite">
+            <div class="system-message">
+                История начинается. Ты управляешь сообщениями Лины.
+            </div>
+        </section>
+
+        <div class="composer">
+            <form class="composer-form" id="messageForm">
+                <input id="messageInput"
+                       type="text"
+                       maxlength="1000"
+                       autocomplete="off"
+                       placeholder="Напиши сообщение от имени Лины..."
+                       aria-label="Сообщение Лины">
+                <button class="send-button" type="submit">
+                    Отправить
+                </button>
+            </form>
+            <div class="composer-note">
+                Можно писать свои сообщения в любой момент.
+                Ответы персонажей формируются по сценарию и ключевым словам.
+            </div>
+        </div>
+
+        <footer class="bottom-bar">
+            <button class="btn" id="backButton" type="button">
+                ← Назад
+            </button>
+            <button class="btn primary" id="continueButton"
+                    type="button">
+                Продолжить →
+            </button>
+            <button class="btn" id="nextChapterButton" type="button">
+                Следующая глава
+            </button>
+        </footer>
+    </main>
+</div>
+
+<script>
+/* ==========================================================
+   НАСТРОЙКА ИЗОБРАЖЕНИЙ
+   ==========================================================
+
+   Когда будут готовы изображения, создай в репозитории папку images.
+
+   Примеры:
+   images/lina.png
+   images/mark.png
+   images/anya.png
+   images/kirill.png
+
+   Фоны можно добавить в соответствующие сцены в поле image.
+   Пока изображения отсутствуют, сайт использует градиенты.
+*/
+
+/* ==========================================================
+   НАСТРОЙКА ЗВУКОВ
+   ==========================================================
+
+   Когда будут готовы аудиофайлы, создай папку audio.
+
+   Примеры:
+   audio/sea.mp3
+   audio/door.mp3
+   audio/footsteps.mp3
+   audio/mystery_hum.mp3
+   audio/cassette.mp3
+   audio/static.mp3
+   audio/three_beeps.mp3
+   audio/panel.mp3
+   audio/stairs.mp3
+   audio/electronic_signal.mp3
+   audio/lock.mp3
+   audio/distorted_voice.mp3
+   audio/alarm.mp3
+   audio/hum_fade.mp3
+   audio/ending_music.mp3
+
+   Звук можно подключить в SOUND_FILES ниже.
+   Если файл не указан или отсутствует, сайт продолжит работать.
+*/
+
+const SOUND_FILES = {
+    sea: "",
+    door: "",
+    footsteps: "",
+    mysteryHum: "",
+    cassette: "",
+    static: "",
+    threeBeeps: "",
+    panel: "",
+    stairs: "",
+    electronicSignal: "",
+    lock: "",
+    distortedVoice: "",
+    alarm: "",
+    humFade: "",
+    endingMusic: ""
+};
+
+/*
+   Номер сцены -> звук, который можно включать при входе в неё.
+
+   Один и тот же звук не будет проигрываться повторно при каждом
+   нажатии на экран. После подключения файлов браузер может
+   потребовать первое нажатие пользователя для разрешения звука.
+*/
+
+const SCENE_SOUNDS = {
+    1: "sea",
+    2: "door",
+    3: "footsteps",
+    4: "mysteryHum",
+    7: "cassette",
+    8: "static",
+    10: "threeBeeps",
+    13: "panel",
+    17: "stairs",
+    19: "electronicSignal",
+    21: "lock",
+    25: "distortedVoice",
+    26: "alarm",
+    28: "humFade",
+    30: "endingMusic"
+};
+
+const SCENES = [
+{
+    title: "Частота",
+    location: "Берег моря",
+    description: "Вечер. Море кажется непривычно тихим.",
+    image: "",
+    background: "linear-gradient(135deg,#263e59,#25254a,#121b32)",
+    dialogue: [
+        ["Марк","Вы уверены, что это хорошая идея? Заброшенная станция, темнота и ни одного нормального объяснения."],
+        ["Аня","Ты говорил это уже три раза. Если боишься, можешь остаться здесь."],
+        ["Кирилл","Тише. Вы слышите? Из здания что-то доносится."]
+    ],
+    choices: ["Спросить, что слышно","Предложить осмотреть здание"]
+},
+{
+    title: "Ржавая дверь",
+    location: "Вход на станцию",
+    description: "Перед вами старая металлическая дверь. На ней почти не осталось краски.",
+    image: "",
+    background: "linear-gradient(135deg,#443d49,#242638,#131a2c)",
+    dialogue: [
+        ["Марк","Табличка предупреждает, что вход запрещён. Просто замечательно."],
+        ["Аня","Дверь не заперта. Странно для такого места."],
+        ["Кирилл","Не трогайте пока ничего. Давайте сначала осмотримся."]
+    ],
+    choices: ["Осмотреть табличку","Войти внутрь"]
+},
+{
+    title: "Длинный коридор",
+    location: "Первый этаж",
+    description: "Внутри пахнет сыростью. Луч фонарика выхватывает из темноты облупленные стены.",
+    image: "",
+    background: "linear-gradient(135deg,#37384b,#22283b,#111827)",
+    dialogue: [
+        ["Аня","Здесь будто никто не был много лет."],
+        ["Марк","Тогда почему на полу свежие следы?"],
+        ["Кирилл","Не трогайте их. Они ведут вглубь станции."]
+    ],
+    choices: ["Изучить следы","Пойти за следами"]
+},
+{
+    title: "Необъяснимый звук",
+    location: "Коридор",
+    description: "Из динамика под потолком доносится низкий гул, хотя электричество отключено.",
+    image: "",
+    background: "linear-gradient(135deg,#302e52,#20243d,#111827)",
+    dialogue: [
+        ["Марк","Скажите, что это кто-нибудь из вас включил."],
+        ["Аня","Я даже не вижу здесь работающих проводов."],
+        ["Кирилл","Этот звук... Я слышал его раньше."]
+    ],
+    choices: ["Спросить Кирилла","Осмотреть динамик"]
+},
+{
+    title: "Комната наблюдения",
+    location: "Старый пост",
+    description: "За стеклом видны пустые столы, разбитые мониторы и пыльные папки.",
+    image: "",
+    background: "linear-gradient(135deg,#344153,#22273e,#13182c)",
+    dialogue: [
+        ["Аня","Посмотрите на стену. Там что-то написано."],
+        ["Марк","«Не отвечайте на третий сигнал». Очень гостеприимно."],
+        ["Кирилл","Надпись могла появиться здесь не просто так."]
+    ],
+    choices: ["Сфотографировать надпись","Поискать документы"]
+},
+{
+    title: "Старая запись",
+    location: "Комната наблюдения",
+    description: "В ящике стола лежит пыльная папка с датой, стёртой почти полностью.",
+    image: "",
+    background: "linear-gradient(135deg,#453d49,#25283e,#171b30)",
+    dialogue: [
+        ["Марк","Здесь список оборудования и несколько номеров."],
+        ["Аня","Один номер обведён красным. Пятнадцать."],
+        ["Кирилл","Запомните его. Кажется, это важно."]
+    ],
+    choices: ["Изучить папку","Осмотреть стол"]
+},
+{
+    title: "Кассета № 15",
+    location: "Архив",
+    description: "В коробке среди старых кассет лежит одна без подписи. На наклейке написано только «15».",
+    image: "",
+    background: "linear-gradient(135deg,#3c3457,#22243e,#14172c)",
+    dialogue: [
+        ["Аня","Почему она лежит отдельно от остальных?"],
+        ["Марк","Может, там объяснение всему этому. Или запись чьего-то храпа."],
+        ["Кирилл","На корпусе свежая царапина. Эту кассету недавно доставали."]
+    ],
+    choices: ["Взять кассету","Осмотреть остальные кассеты"]
+},
+{
+    title: "Голос из прошлого",
+    location: "Комната связи",
+    description: "Старый магнитофон неожиданно принимает кассету. В динамике раздаётся шипение.",
+    image: "",
+    background: "linear-gradient(135deg,#343a58,#25233f,#13182a)",
+    dialogue: [
+        ["Запись","...если вы слышите это сообщение, значит, станция снова активна."],
+        ["Марк","Это запись или кто-то говорит с нами сейчас?"],
+        ["Запись","Не отвечайте на третий сигнал."]
+    ],
+    choices: ["Прослушать дальше","Остановить запись"]
+},
+{
+    title: "Пустой кабинет",
+    location: "Кабинет оператора",
+    description: "На столе стоит старый телефон. Рядом лежит блокнот с вырванными страницами.",
+    image: "",
+    background: "linear-gradient(135deg,#3b3d50,#23263a,#13172a)",
+    dialogue: [
+        ["Аня","В блокноте повторяется одна фраза: «Он знает, когда мы слушаем»."],
+        ["Марк","Кто — он? И почему у меня ощущение, что мы зря сюда пришли?"],
+        ["Кирилл","Потому что мы пока не знаем, с чем имеем дело."]
+    ],
+    choices: ["Изучить телефон","Прочитать блокнот"]
+},
+{
+    title: "Третий сигнал",
+    location: "Комната связи",
+    description: "Тишину разрывают три коротких электронных сигнала.",
+    image: "",
+    background: "linear-gradient(135deg,#4b3557,#252340,#12182c)",
+    dialogue: [
+        ["Марк","Это были те самые три сигнала?"],
+        ["Аня","Но мы ничего не отвечали. Верно?"],
+        ["Кирилл","Не говорите ничего в микрофон. Просто отойдите."]
+    ],
+    choices: ["Отойти от оборудования","Проверить индикаторы"]
+},
+{
+    title: "Свет за стеной",
+    location: "Технический коридор",
+    description: "Под закрытой дверью видна тонкая полоска холодного света.",
+    image: "",
+    background: "linear-gradient(135deg,#2e4052,#22263f,#101829)",
+    dialogue: [
+        ["Аня","Там кто-то есть?"],
+        ["Марк","Если там кто-то есть, он уже знает, что мы здесь."],
+        ["Кирилл","Свет идёт от приборов. Дверь ведёт в технический сектор."]
+    ],
+    choices: ["Проверить дверь","Осмотреть стену рядом"]
+},
+{
+    title: "Чужие записи",
+    location: "Технический сектор",
+    description: "На стене прикреплены схемы. Некоторые части отмечены одинаковым символом.",
+    image: "",
+    background: "linear-gradient(135deg,#3d3b59,#25243e,#11172b)",
+    dialogue: [
+        ["Марк","Это схема всей станции. Но тут есть этаж, которого нет на табличках."],
+        ["Аня","Подземный уровень? Почему его скрыли?"],
+        ["Кирилл","Возможно, потому что именно там находится источник сигнала."]
+    ],
+    choices: ["Изучить схему","Найти вход на нижний уровень"]
+},
+{
+    title: "Скрытая панель",
+    location: "Технический сектор",
+    description: "За шкафом обнаруживается небольшая металлическая панель с кнопками.",
+    image: "",
+    background: "linear-gradient(135deg,#3d4056,#22283e,#101729)",
+    dialogue: [
+        ["Аня","На панели те же символы, что и на схеме."],
+        ["Марк","Только не нажимайте всё подряд. Я серьёзно."],
+        ["Кирилл","Здесь должен быть механизм открытия. Нужно найти правильную последовательность."]
+    ],
+    choices: ["Осмотреть символы","Поискать код в записях"]
+},
+{
+    title: "Четыре символа",
+    location: "У скрытой панели",
+    description: "Четыре символа расположены вокруг выцветшего круга.",
+    image: "",
+    background: "linear-gradient(135deg,#393657,#24263e,#12172a)",
+    dialogue: [
+        ["Марк","Первый похож на волну. Второй — на глаз."],
+        ["Аня","Третий напоминает спираль, а четвёртый я вообще не понимаю."],
+        ["Кирилл","Эти символы встречаются в старых документах. Мы почти нашли нужное место."]
+    ],
+    choices: ["Сопоставить символы со схемой","Проверить записи"]
+},
+{
+    title: "Ответ на стене",
+    location: "Технический сектор",
+    description: "Под слоем пыли проступает надпись, которой не было видно раньше.",
+    image: "",
+    background: "linear-gradient(135deg,#454057,#24243d,#111729)",
+    dialogue: [
+        ["Аня","Здесь написано: «Не ищите передатчик. Ищите слушателя»."],
+        ["Марк","Это звучит ещё хуже, чем всё, что мы нашли до сих пор."],
+        ["Кирилл","Теперь понятно, почему обычные схемы не помогли."]
+    ],
+    choices: ["Спросить Кирилла о надписи","Продолжить поиск"]
+},
+{
+    title: "Нижний уровень",
+    location: "Лестница",
+    description: "За панелью обнаруживается узкая лестница, уходящая в темноту.",
+    image: "",
+    background: "linear-gradient(135deg,#33344c,#20263a,#0e1526)",
+    dialogue: [
+        ["Марк","Мы точно хотим спускаться туда?"],
+        ["Аня","Мы уже нашли слишком много странного, чтобы просто уйти."],
+        ["Кирилл","Держитесь вместе. И не отставайте."]
+    ],
+    choices: ["Спуститься","Остаться наверху и осмотреть помещение"]
+},
+{
+    title: "Подземный коридор",
+    location: "Нижний уровень",
+    description: "Шаги отзываются долгим эхом. На стенах тянутся кабели, ведущие к массивной двери.",
+    image: "",
+    background: "linear-gradient(135deg,#28384c,#202238,#0c1324)",
+    dialogue: [
+        ["Аня","Кабели новые. Они не могли пролежать здесь столько лет."],
+        ["Марк","Значит, кто-то поддерживает оборудование в рабочем состоянии."],
+        ["Кирилл","И этот кто-то не хочет, чтобы мы нашли комнату за дверью."]
+    ],
+    choices: ["Осмотреть кабели","Подойти к двери"]
+},
+{
+    title: "Ответ из темноты",
+    location: "Подземный зал",
+    description: "За дверью обнаруживается круглая комната. Один из приборов отвечает на ваши движения.",
+    image: "",
+    background: "linear-gradient(135deg,#433459,#24223e,#10162a)",
+    dialogue: [
+        ["Марк","Я ничего не нажимал! Оно само включилось."],
+        ["Аня","Смотрите на экран. Там появляются слова."],
+        ["Неизвестный сигнал","СЛЫШУ ВАС."]
+    ],
+    choices: ["Спросить, кто отвечает","Отключить экран"]
+},
+{
+    title: "Комната слушателя",
+    location: "Подземный зал",
+    description: "На центральном экране отображаются три силуэта. Один из них похож на вас.",
+    image: "",
+    background: "linear-gradient(135deg,#373451,#24243f,#11172b)",
+    dialogue: [
+        ["Аня","Почему один силуэт похож на Лину?"],
+        ["Марк","Это может быть случайное совпадение. Правда?"],
+        ["Кирилл","Нет. Посмотрите на дату в углу экрана."]
+    ],
+    choices: ["Проверить дату","Спросить Кирилла, что он знает"]
+},
+{
+    title: "Код принят",
+    location: "Пульт управления",
+    description: "На экране появляется поле ввода. Рядом лежит карточка с четырьмя цифрами.",
+    image: "",
+    background: "linear-gradient(135deg,#34475a,#24243d,#11172b)",
+    dialogue: [
+        ["Марк","Четыре цифры. Это может быть код доступа."],
+        ["Аня","На карточке написано: «Последняя проверка»."],
+        ["Кирилл","Попробуем ввести код. Но будьте готовы отойти от панели."]
+    ],
+    choices: ["Ввести код с карточки","Сначала осмотреть панель"]
+},
+{
+    title: "Запись Лины",
+    location: "Архив подземного уровня",
+    description: "На мониторе появляется файл с именем Лины и сегодняшней датой.",
+    image: "",
+    background: "linear-gradient(135deg,#3d3559,#24243e,#10172b)",
+    dialogue: [
+        ["Марк","Лина, это твоё имя. Ты когда-нибудь слышала об этой станции?"],
+        ["Аня","Файл создан сегодня. Значит, кто-то наблюдает за нами прямо сейчас."],
+        ["Кирилл","Нужно выяснить, что находится внутри файла, прежде чем делать выводы."]
+    ],
+    choices: ["Открыть файл","Проверить, кто создал файл"]
+},
+{
+    title: "Неизвестный голос",
+    location: "Архив подземного уровня",
+    description: "Из динамика доносится искажённый голос. Он произносит имя Лины.",
+    image: "",
+    background: "linear-gradient(135deg,#493553,#29223e,#101629)",
+    dialogue: [
+        ["Неизвестный голос","Лина... если ты слышишь меня, значит, всё началось снова."],
+        ["Марк","Кто это? Откуда он знает твоё имя?"],
+        ["Аня","Голос будто записан очень давно, но обращается к нам."]
+    ],
+    choices: ["Ответить голосу","Остановить воспроизведение"]
+},
+{
+    title: "Последний журнал",
+    location: "Архив",
+    description: "Вы находите журнал дежурств. Последняя запись обрывается на полуслове.",
+    image: "",
+    background: "linear-gradient(135deg,#414054,#25253d,#11172b)",
+    dialogue: [
+        ["Аня","Здесь написано, что сигнал появился до закрытия станции."],
+        ["Марк","А дальше страницы вырваны. Как удобно."],
+        ["Кирилл","Кто-то не хотел, чтобы мы узнали, что произошло в последнюю ночь."]
+    ],
+    choices: ["Поискать вырванные страницы","Осмотреть шкафы"]
+},
+{
+    title: "Отключение",
+    location: "Пульт управления",
+    description: "Приборы начинают мигать. На экране появляется предупреждение о перегрузке.",
+    image: "",
+    background: "linear-gradient(135deg,#4b354a,#29243e,#12172a)",
+    dialogue: [
+        ["Марк","Нужно уходить. Эта штука явно не рассчитана на такую нагрузку."],
+        ["Аня","Но если мы отключим питание, мы потеряем все записи!"],
+        ["Кирилл","Есть ручной выключатель. Решать нужно сейчас."]
+    ],
+    choices: ["Отключить питание","Попытаться сохранить записи"]
+},
+{
+    title: "Выход закрыт",
+    location: "Подземный коридор",
+    description: "Когда вы возвращаетесь, дверь наверх оказывается заблокирована.",
+    image: "",
+    background: "linear-gradient(135deg,#333d50,#24243c,#11172a)",
+    dialogue: [
+        ["Аня","Дверь не открывается!"],
+        ["Марк","Прекрасно. Мы в ловушке."],
+        ["Кирилл","Должен быть запасной выход. Ищите маркировку на стенах."]
+    ],
+    choices: ["Осмотреть стены","Попробовать открыть дверь вручную"]
+},
+{
+    title: "Тишина",
+    location: "Подземный зал",
+    description: "Гул постепенно исчезает. На несколько секунд станция становится абсолютно тихой.",
+    image: "",
+    background: "linear-gradient(135deg,#27334a,#1b2038,#0b1120)",
+    dialogue: [
+        ["Марк","Вы тоже это заметили? Сигнал исчез."],
+        ["Аня","На экране осталось только одно слово: «ПРОДОЛЖЕНИЕ»."],
+        ["Кирилл","Это не конец. Кто-то оставил нам следующий шаг."]
+    ],
+    choices: ["Сфотографировать экран","Искать запасной выход"]
+},
+{
+    title: "Снаружи",
+    location: "Берег моря",
+    description: "Вы наконец выбираетесь наружу. Над морем начинает светлеть.",
+    image: "",
+    background: "linear-gradient(135deg,#455b70,#34445f,#202a48)",
+    dialogue: [
+        ["Аня","Я никогда больше не пойду в заброшенные здания. Никогда."],
+        ["Марк","Ты говорила то же самое перед тем, как мы спустились."],
+        ["Кирилл","Нам нужно обсудить всё, что мы нашли. Но не здесь."]
+    ],
+    choices: ["Спросить Кирилла о правде","Предложить вернуться домой"]
+},
+{
+    title: "Новый сигнал",
+    location: "Дорога от станции",
+    description: "Телефон Лины вибрирует. На экране появляется уведомление от неизвестного отправителя.",
+    image: "",
+    background: "linear-gradient(135deg,#384a62,#29304d,#171c33)",
+    dialogue: [
+        ["Неизвестный отправитель","Вы нашли только первую дверь."],
+        ["Марк","Номер скрыт. Откуда пришло сообщение?"],
+        ["Аня","Лина, посмотри на вложение. Кажется, там карта."]
+    ],
+    choices: ["Открыть вложение","Удалить сообщение"]
+},
+{
+    title: "Продолжение следует",
+    location: "Неизвестное место",
+    description: "На карте отмечена другая точка. Внизу появляется строка: «Вторая частота уже активна».",
+    image: "",
+    background: "linear-gradient(135deg,#493c68,#282542,#10172c)",
+    dialogue: [
+        ["Марк","Похоже, мы случайно ввязались в историю куда больше этой станции."],
+        ["Аня","И кто-то явно хочет, чтобы мы продолжили."],
+        ["Кирилл","Теперь у нас есть выбор. Но прежде чем идти дальше, нам нужно узнать правду."]
+    ],
+    choices: ["Сохранить карту","Обсудить следующий шаг"]
+}
+];
+
+/* ==========================================================
+   СОСТОЯНИЕ ИСТОРИИ
+   ========================================================== */
+
+const SAVE_KEY = "frequency_interactive_v7";
+
+let state = {
+    scene: 0,
+    dialogueIndex: 0,
+    pendingReply: false,
+    messages: [],
+    completedScenes: [],
+    soundEnabled: true,
+    volume: 0.6
+};
+
+let audioObjects = {};
+let playedSceneSounds = new Set();
+let currentChoices = [];
+
+const chatArea = document.getElementById("chatArea");
+const storyBanner = document.getElementById("storyBanner");
+const sceneTitle = document.getElementById("sceneTitle");
+const sceneDescription = document.getElementById("sceneDescription");
+const locationLabel = document.getElementById("locationLabel");
+const messageInput = document.getElementById("messageInput");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+const soundButton = document.getElementById("soundButton");
+const topSoundButton = document.getElementById("topSoundButton");
+const volumeInput = document.getElementById("volume");
+
+/* ==========================================================
+   ЗВУКОВАЯ СИСТЕМА
+   ========================================================== */
+
+function prepareAudio() {
+    Object.keys(SOUND_FILES).forEach(function(key) {
+        const path = SOUND_FILES[key];
+
+        if (!path) return;
+
+        const audio = new Audio(path);
+        audio.preload = "none";
+        audio.volume = state.volume;
+        audioObjects[key] = audio;
+    });
+}
+
+function playSound(name) {
+    if (!state.soundEnabled) return;
+
+    const audio = audioObjects[name];
+
+    if (!audio) return;
+
+    try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = state.volume;
+
+        const result = audio.play();
+
+        if (result && typeof result.catch === "function") {
+            result.catch(function() {
+                // Если браузер запрещает звук, история продолжает работать.
+            });
+        }
+    } catch (error) {
+        // Отсутствие аудиофайла не должно ломать сайт.
+    }
+}
+
+function playSceneSound(sceneNumber) {
+    if (playedSceneSounds.has(sceneNumber)) return;
+
+    const soundName = SCENE_SOUNDS[sceneNumber];
+
+    if (!soundName) return;
+
+    playedSceneSounds.add(sceneNumber);
+    playSound(soundName);
+}
+
+function updateSoundButtons() {
+    const label = state.soundEnabled
+        ? "🔊 Звуки включены"
+        : "🔇 Звуки выключены";
+
+    soundButton.textContent = label;
+    topSoundButton.textContent = state.soundEnabled
+        ? "🔊 Звук"
+        : "🔇 Без звука";
+}
+
+function toggleSound() {
+    state.soundEnabled = !state.soundEnabled;
+
+    if (!state.soundEnabled) {
+        Object.values(audioObjects).forEach(function(audio) {
+            audio.pause();
+        });
+    }
+
+    updateSoundButtons();
+    saveProgress(false);
+}
+
+soundButton.addEventListener("click", toggleSound);
+topSoundButton.addEventListener("click", toggleSound);
+
+volumeInput.addEventListener("input", function() {
+    state.volume = Number(volumeInput.value) / 100;
+
+    Object.values(audioObjects).forEach(function(audio) {
+        audio.volume = state.volume;
+    });
+
+    saveProgress(false);
+});
+
+/* ==========================================================
+   ОТОБРАЖЕНИЕ ИСТОРИИ
+   ========================================================== */
+
+function addMessage(name, text, isMe, saveIt) {
+    const message = {
+        name: name,
+        text: text,
+        isMe: Boolean(isMe)
+    };
+
+    if (saveIt !== false) {
+        state.messages.push(message);
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "message" + (isMe ? " me" : "");
+
+    const avatar = document.createElement("div");
+    avatar.className = "message-avatar";
+
+    const initials = {
+        "Лина": "Л",
+        "Марк": "М",
+        "Аня": "А",
+        "Кирилл": "К",
+        "Неизвестный сигнал": "?",
+        "Неизвестный голос": "?",
+        "Неизвестный отправитель": "?"
+    };
+
+    const imagePaths = {
+        "Лина": "images/lina.png",
+        "Марк": "images/mark.png",
+        "Аня": "images/anya.png",
+        "Кирилл": "images/kirill.png"
+    };
+
+    const imagePath = imagePaths[name];
+
+    if (imagePath) {
+        const img = document.createElement("img");
+        img.src = imagePath;
+        img.alt = name;
+
+        img.onerror = function() {
+            img.remove();
+            avatar.textContent = initials[name] || "?";
+        };
+
+        avatar.appendChild(img);
+    } else {
+        avatar.textContent = initials[name] || "?";
+    }
+
+    const content = document.createElement("div");
+    content.className = "message-content";
+
+    const nameElement = document.createElement("div");
+    nameElement.className = "message-name";
+    nameElement.textContent = name;
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    content.appendChild(nameElement);
+    content.appendChild(bubble);
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(content);
+
+    chatArea.appendChild(wrapper);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function addSystemMessage(text, saveIt) {
+    const message = {
+        name: "system",
+        text: text,
+        isMe: false
+    };
+
+    if (saveIt !== false) {
+        state.messages.push(message);
+    }
+
+    const element = document.createElement("div");
+    element.className = "system-message";
+    element.textContent = text;
+
+    chatArea.appendChild(element);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function renderMessages() {
+    chatArea.innerHTML = "";
+
+    state.messages.forEach(function(message) {
+        if (message.name === "system") {
+            addSystemMessage(message.text, false);
+        } else {
+            addMessage(
+                message.name,
+                message.text,
+                message.isMe,
+                false
+            );
+        }
+    });
+}
+
+function renderScene() {
+    const scene = SCENES[state.scene];
+
+    if (!scene) return;
+
+    sceneTitle.textContent = scene.title;
+    sceneDescription.textContent = scene.description;
+    locationLabel.textContent = scene.location;
+
+    storyBanner.style.background =
+        "linear-gradient(0deg, rgba(10,11,24,.88), rgba(10,11,24,.12)), " +
+        (scene.image
+            ? 'url("' + scene.image + '") center/cover no-repeat'
+            : scene.background);
+
+    progressBar.style.width =
+        ((state.scene + 1) / SCENES.length * 100) + "%";
+
+    progressText.textContent =
+        "Сцена " + (state.scene + 1) + " из " + SCENES.length;
+
+    playSceneSound(state.scene + 1);
+    renderChoices();
+    saveProgress(false);
+}
+
+function renderChoices() {
+    const oldChoices = document.getElementById("choicesArea");
+
+    if (oldChoices) oldChoices.remove();
+
+    const scene = SCENES[state.scene];
+
+    if (!scene || !scene.choices || !scene.choices.length) return;
+
+    const area = document.createElement("div");
+    area.className = "choices";
+    area.id = "choicesArea";
+
+    scene.choices.forEach(function(choice) {
+        const button = document.createElement("button");
+        button.className = "choice-button";
+        button.type = "button";
+        button.textContent = choice;
+
+        button.addEventListener("click", function() {
+            addMessage("Лина", choice, true);
+            state.pendingReply = true;
+
+            const reply = getResponse(choice);
+            addMessage(reply.name, reply.text, false);
+
+            state.pendingReply = false;
+            state.dialogueIndex++;
+
+            saveProgress(false);
+            area.remove();
+        });
+
+        area.appendChild(button);
+    });
+
+    chatArea.appendChild(area);
+}
+
+/* ==========================================================
+   ДИАЛОГИ И ОТВЕТЫ
+   ========================================================== */
+
+function getResponse(input) {
+    const text = input.toLowerCase();
+
+    if (
+        text.includes("кто ты") ||
+        text.includes("кто это") ||
+        text.includes("кто говорит")
+    ) {
+        return {
+            name: "Кирилл",
+            text: "Пока не знаю. Но источник сигнала явно связан с этой станцией."
+        };
+    }
+
+    if (
+        text.includes("страшно") ||
+        text.includes("боюсь") ||
+        text.includes("опасно")
+    ) {
+        return {
+            name: "Аня",
+            text: "Мне тоже не по себе. Давай хотя бы не будем разделяться."
+        };
+    }
+
+    if (
+        text.includes("уйти") ||
+        text.includes("домой") ||
+        text.includes("назад")
+    ) {
+        return {
+            name: "Марк",
+            text: "Я не против. Но сначала надо убедиться, что мы сможем безопасно выбраться."
+        };
+    }
+
+    if (
+        text.includes("почему") ||
+        text.includes("зачем")
+    ) {
+        return {
+            name: "Кирилл",
+            text: "Хороший вопрос. Нам нужно больше информации, прежде чем делать выводы."
+        };
+    }
+
+    if (
+        text.includes("кассет") ||
+        text.includes("магнитофон") ||
+        text.includes("запись")
+    ) {
+        return {
+            name: "Аня",
+            text: "Давай проверим запись ещё раз. Возможно, мы пропустили что-то важное."
+        };
+    }
+
+    if (
+        text.includes("сигнал") ||
+        text.includes("частот")
+    ) {
+        return {
+            name: "Марк",
+            text: "Похоже, сигнал повторяется по определённой схеме. Нужно выяснить, что его запускает."
+        };
+    }
+
+    if (
+        text.includes("кирилл")
+    ) {
+        return {
+            name: "Кирилл",
+            text: "Я понимаю, что у вас есть вопросы. Я отвечу, когда смогу объяснить всё нормально."
+        };
+    }
+
+    if (
+        text.includes("аня")
+    ) {
+        return {
+            name: "Аня",
+            text: "Я здесь, Лина. Что бы ни происходило, давай держаться вместе."
+        };
+    }
+
+    if (
+        text.includes("марк")
+    ) {
+        return {
+            name: "Марк",
+            text: "Да, Лина? Я слушаю."
+        };
+    }
+
+    const responses = [
+        {
+            name: "Марк",
+            text: "Не уверен, что это что-то объясняет. Но я запомню."
+        },
+        {
+            name: "Аня",
+            text: "Может быть. Давай проверим, прежде чем делать выводы."
+        },
+        {
+            name: "Кирилл",
+            text: "Возможно, это связано с тем, что мы уже обнаружили."
+        },
+        {
+            name: "Марк",
+            text: "Хорошо. Что будем делать дальше?"
+        },
+        {
+            name: "Аня",
+            text: "Я тебя поняла. Только давай будем осторожны."
+        }
+    ];
+
+    const index = Math.abs(hashString(input)) % responses.length;
+    return responses[index];
+}
+
+function hashString(text) {
+    let hash = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+    }
+
+    return hash;
+}
+
+function sendMessage(text) {
+    const cleanText = text.trim();
+
+    if (!cleanText) return;
+
+    addMessage("Лина", cleanText, true);
+    messageInput.value = "";
+
+    const reply = getResponse(cleanText);
+
+    /*
+       Ответ появляется после отправки сообщения.
+       Сайт не обращается к настоящей нейросети:
+       ответы создаются по ключевым словам и шаблонам.
+    */
+
+    window.setTimeout(function() {
+        addMessage(reply.name, reply.text, false);
+        saveProgress(false);
+    }, 250);
+
+    saveProgress(false);
+}
+
+document.getElementById("messageForm")
+    .addEventListener("submit", function(event) {
+        event.preventDefault();
+        sendMessage(messageInput.value);
+    });
+
+/* ==========================================================
+   ПРОДВИЖЕНИЕ ПО СЦЕНАМ
+   ========================================================== */
+
+function advanceStory() {
+    const scene = SCENES[state.scene];
+
+    if (!scene) return;
+
+    if (state.dialogueIndex < scene.dialogue.length) {
+        const line = scene.dialogue[state.dialogueIndex];
+
+        addMessage(line[0], line[1], false);
+        state.dialogueIndex++;
+
+        saveProgress(false);
+        return;
+    }
+
+    if (state.scene < SCENES.length - 1) {
+        state.completedScenes.push(state.scene);
+        state.scene++;
+        state.dialogueIndex = 0;
+
+        renderScene();
+
+        addSystemMessage(
+            "Сцена " + (state.scene + 1) + ". " +
+            SCENES[state.scene].location + "."
+        );
+
+        saveProgress(false);
+    } else {
+        addSystemMessage(
+            "Первая глава завершена. Продолжение следует…"
+        );
+
+        document.getElementById("continueButton").textContent =
+            "Глава завершена";
+
+        saveProgress(false);
+    }
+}
+
+function goBack() {
+    if (state.scene <= 0) return;
+
+    state.scene--;
+    state.dialogueIndex = 0;
+
+    renderScene();
+    addSystemMessage("Вы вернулись к предыдущей сцене.");
+    saveProgress(false);
+}
+
+storyBanner.addEventListener("click", advanceStory);
+
+storyBanner.addEventListener("keydown", function(event) {
+    if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        advanceStory();
+    }
+});
+
+document.getElementById("continueButton")
+    .addEventListener("click", advanceStory);
+
+document.getElementById("backButton")
+    .addEventListener("click", goBack);
+
+document.getElementById("nextChapterButton")
+    .addEventListener("click", function() {
+        if (state.scene === SCENES.length - 1) {
+            alert(
+                "Первая глава завершена! Вторая глава пока не добавлена."
+            );
+        } else {
+            alert(
+                "Сначала закончи первую главу, чтобы перейти дальше."
+            );
+        }
+    });
+
+/* ==========================================================
+   СОХРАНЕНИЕ И ВОССТАНОВЛЕНИЕ
+   ========================================================== */
+
+function saveProgress(showMessage) {
+    try {
+        const data = {
+            scene: state.scene,
+            dialogueIndex: state.dialogueIndex,
+            pendingReply: state.pendingReply,
+            messages: state.messages,
+            completedScenes: state.completedScenes,
+            soundEnabled: state.soundEnabled,
+            volume: state.volume,
+            playedSceneSounds: Array.from(playedSceneSounds)
+        };
+
+        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+
+        if (showMessage) {
+            addSystemMessage("Прогресс сохранён.");
+        }
+    } catch (error) {
+        if (showMessage) {
+            addSystemMessage(
+                "Не удалось сохранить прогресс в этом браузере."
+            );
+        }
+    }
+}
+
+function loadProgress() {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+
+        if (!raw) return false;
+
+        const data = JSON.parse(raw);
+
+        if (typeof data.scene === "number") {
+            state.scene = Math.max(
+                0,
+                Math.min(SCENES.length - 1, data.scene)
+            );
+        }
+
+        if (typeof data.dialogueIndex === "number") {
+            state.dialogueIndex = Math.max(
+                0,
+                data.dialogueIndex
+            );
+        }
+
+        if (Array.isArray(data.messages)) {
+            state.messages = data.messages;
+        }
+
+        if (Array.isArray(data.completedScenes)) {
+            state.completedScenes = data.completedScenes;
+        }
+
+        if (typeof data.soundEnabled === "boolean") {
+            state.soundEnabled = data.soundEnabled;
+        }
+
+        if (typeof data.volume === "number") {
+            state.volume = Math.max(0, Math.min(1, data.volume));
+        }
+
+        if (Array.isArray(data.playedSceneSounds)) {
+            playedSceneSounds = new Set(data.playedSceneSounds);
+        }
+
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+document.getElementById("saveButton")
+    .addEventListener("click", function() {
+        saveProgress(true);
+    });
+
+document.getElementById("restartButton")
+    .addEventListener("click", function() {
+        const confirmed = confirm(
+            "Начать историю заново? Текущий прогресс будет удалён."
+        );
+
+        if (!confirmed) return;
+
+        localStorage.removeItem(SAVE_KEY);
+
+        Object.values(audioObjects).forEach(function(audio) {
+            audio.pause();
+            audio.currentTime = 0;
+        });
+
+        state = {
+            scene: 0,
+            dialogueIndex: 0,
+            pendingReply: false,
+            messages: [],
+            completedScenes: [],
+            soundEnabled: true,
+            volume: 0.6
+        };
+
+        playedSceneSounds = new Set();
+
+        volumeInput.value = 60;
+        document.getElementById("continueButton").textContent =
+            "Продолжить →";
+
+        chatArea.innerHTML = "";
+
+        addSystemMessage(
+            "История начинается заново. Ты управляешь сообщениями Лины."
+        );
+
+        renderScene();
+        updateSoundButtons();
+        saveProgress(false);
+    });
+
+/* ==========================================================
+   ЗАПУСК
+   ========================================================== */
+
+prepareAudio();
+
+const restored = loadProgress();
+
+volumeInput.value = Math.round(state.volume * 100);
+
+renderMessages();
+renderScene();
+updateSoundButtons();
+
+if (!restored || state.messages.length === 0) {
+    addSystemMessage(
+        "Ты находишься у старой станции на берегу моря. " +
+        "История начинается..."
+    );
+}
+</script>
+</body>
+ </html><!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Частота — интерактивная история</title>
 <style>
@@ -18,20 +1886,17 @@ main{max-width:760px;margin:auto;padding:14px}
 .message{display:flex;gap:10px;margin:14px 0;align-items:flex-start}
 .avatar{width:43px;height:43px;flex-shrink:0;border-radius:50%;background:#343957;display:grid;place-items:center;font-size:21px}
 .bubble{background:#252c40;padding:11px 13px;border-radius:4px 14px 14px 14px;line-height:1.5;overflow-wrap:anywhere;flex:1}
-.message.mine{flex-direction:row-reverse}
-.message.mine .bubble{background:#393052;border-radius:14px 4px 14px 14px}
 .name{font-size:12px;color:#c5b5ff;margin-bottom:5px}
 .action{font-style:italic;color:#b6bed5;line-height:1.5;margin:13px 0}
-#reply{width:100%;background:#101522;color:white;border:1px solid #414963;border-radius:10px;padding:13px;font-size:16px;margin:8px 0}
 .controls{display:flex;gap:8px;flex-wrap:wrap}
 button{border:0;border-radius:10px;padding:12px 15px;background:#7866ca;color:white;font-size:14px;cursor:pointer}
 button.secondary{background:#30374c}
 button.danger{background:#8f405a}
 button:disabled{opacity:.4}
+input{width:100%;background:#101522;color:white;border:1px solid #414963;border-radius:10px;padding:13px;font-size:16px;margin:8px 0}
 #status{font-size:12px;color:#aab1c9;margin-top:10px}
 #turn{color:#c5b5ff;font-size:14px;margin-bottom:8px}
 footer{text-align:center;color:#aab1c9;font-size:12px;padding:18px}
-@media(max-width:450px){main{padding:9px}.panel{padding:11px}}
 </style>
 </head>
 <body>
@@ -46,76 +1911,162 @@ footer{text-align:center;color:#aab1c9;font-size:12px;padding:18px}
 <div id="chapter">Глава 1 · Сцена 1 из 30</div>
 </section>
 
-<section class="panel" id="story" aria-live="polite"></section>
+<section class="panel" id="story"></section>
 
 <section class="panel" id="inputPanel">
-<div id="turn">Ты играешь за Лину. Напиши сообщение друзьям.</div>
-<input id="reply" placeholder="Напиши сообщение..." autocomplete="off">
+<div id="turn">Сейчас твой ход — ты играешь за Лину.</div>
+<input id="reply" placeholder="Напиши сообщение от лица Лины..." autocomplete="off">
 <div class="controls">
-<button id="send">Отправить сообщение</button>
-<button id="voice" class="secondary">🎙 Голосовое</button>
+<button id="send">Отправить</button>
+<button id="continue" class="secondary">Продолжить →</button>
 </div>
 <div id="status">Прогресс сохраняется автоматически.</div>
 </section>
 
 <section class="panel">
 <div class="controls">
-<button class="secondary" id="save">Сохранить прогресс</button>
+<button class="secondary" id="save">Сохранить</button>
 <button class="danger" id="reset">Пройти заново</button>
-<button class="secondary" id="nextChapter">Следующая глава</button>
+<button class="secondary" id="nextChapter" disabled>Следующая глава (скоро)</button>
 </div>
 </section>
-
 <footer>Ты — Лина. История продолжается вместе с тобой.</footer>
 </main>
 
 <script>
-const SAVE_KEY="frequency_story_v5";
+const SAVE_KEY="frequency_story_v3";
 
 const scenes=[
-{place:"Берег моря",action:"*Вечер. Четверо друзей подходят к заброшенной военной станции.*",talk:[["Марк","Мы точно должны были прийти именно сюда?"],["Кирилл","Тише. Вы слышите этот звук?"],["Аня","Ты сама говорила, что хочешь узнать, что здесь произошло."]]},
-{place:"Вход",action:"*Ржавая дверь скрипит, когда Марк толкает её плечом.*",talk:[["Марк","Дверь открыта. Это уже странно."],["Кирилл","На карте вход был отмечен как закрытый."],["Аня","Может, мы всё-таки не будем заходить?"]]},
-{place:"Коридор",action:"*Внутри пахнет сыростью. На стенах висят выцветшие таблички.*",talk:[["Аня","Здесь будто всё застыло во времени."],["Марк","Смотрите под ноги. Пол местами провалился."],["Кирилл","В конце коридора есть ещё одна дверь."]]},
-{place:"Странный звук",action:"*Из глубины станции доносятся три коротких сигнала.*",talk:[["Марк","Это точно не ветер."],["Кирилл","Но электричество здесь отключили много лет назад."],["Аня","Похоже на радиопомехи."]]},
-{place:"Старая карта",action:"*За стеклом лежит пожелтевший план здания.*",talk:[["Кирилл","Вот восточное крыло. Там находился архив."],["Марк","Тогда начнём с него."],["Аня","Погодите. Что это за помещение без номера?"]]},
-{place:"Комната охраны",action:"*На столе лежит журнал дежурств с последней записью.*",talk:[["Аня","Записи резко обрываются пятнадцать лет назад."],["Марк","Может, станцию закрыли после аварии."],["Кирилл","Тогда почему в журнале нет ни слова об аварии?"]]},
-{place:"Кассета № 15",action:"*В ящике обнаруживается кассета с цифрой 15.*",talk:[["Марк","Кассета. Кто-нибудь захватил магнитофон?"],["Аня","Конечно, нет. Мы же не знали, что найдём."],["Кирилл","В соседней комнате был старый аппарат."]]},
-{place:"Магнитофон",action:"*Старый магнитофон щёлкает и начинает шипеть.*",talk:[["Аня","Если оттуда сейчас кто-нибудь заговорит, я уйду."],["Марк","Тише, запись начинается."],["Голос записи","Если вы слышите это сообщение, значит, система снова активна."]]},
-{place:"Голос на записи",action:"*Голос на кассете искажается, будто запись повреждена.*",talk:[["Кирилл","Возможно, это предупреждение."],["Голос записи","Не включайте передатчик после третьего сигнала."],["Марк","Какого передатчика?"]]},
-{place:"Третий сигнал",action:"*Станция вздрагивает от трёх громких сигналов. Свет на миг вспыхивает.*",talk:[["Аня","Вот они! Три сигнала!"],["Марк","Все назад!"],["Кирилл","Посмотрите на стекло. Там появилась надпись."]]},
-{place:"Надпись",action:"*На запотевшем стекле проступают слова: «Найдите источник».*",talk:[["Марк","Кто-то явно хочет, чтобы мы шли дальше."],["Аня","Или хочет заманить нас в ловушку."],["Кирилл","Нужно понять, откуда идёт сигнал."]]},
-{place:"Восточное крыло",action:"*Друзья идут по коридору, следуя за тихим гулом.*",talk:[["Аня","Звук становится громче."],["Кирилл","Он идёт будто из-за стены."],["Марк","Значит, там может быть скрытый проход."]]},
-{place:"Скрытая панель",action:"*Кирилл замечает металлическую пластину в стене.*",talk:[["Кирилл","На ней тот же символ, что и на кассете."],["Марк","Попробуем нажать?"],["Аня","Только аккуратно, пожалуйста."]]},
-{place:"Архив",action:"*За панелью обнаруживается небольшая дверь в архив.*",talk:[["Марк","Вот почему его нет на карте."],["Аня","Сколько же здесь папок!"],["Кирилл","Нам нужна информация о пятнадцатой кассете."]]},
-{place:"Дело № 15",action:"*В папке лежат схемы станции и фотографии странных металлических конструкций.*",talk:[["Аня","На снимках станция выглядит совершенно новой."],["Кирилл","Это звуковые зеркала. Они направляли звуковые волны."],["Марк","И все они направлены в одну точку."]]},
-{place:"Звуковые зеркала",action:"*На схеме отмечена круглая камера под зданием.*",talk:[["Кирилл","Источник сигнала находится внизу."],["Аня","А мы всё это время слышали его с поверхности?"],["Марк","Тогда нам нужно найти лестницу."]]},
-{place:"Лестница вниз",action:"*За архивом находится узкая лестница, уходящая в темноту.*",talk:[["Аня","Почему мне кажется, что это плохая идея?"],["Марк","Потому что мы ничего не знаем об этом месте."],["Кирилл","Будем держаться вместе."]]},
-{place:"Нижний уровень",action:"*Внизу холоднее. По стенам тянутся старые кабели.*",talk:[["Кирилл","Система всё ещё получает питание."],["Марк","Но откуда?"],["Аня","Смотрите, там прибор с мигающим экраном!"]]},
-{place:"Чужой ответ",action:"*Прибор издаёт два сигнала, словно отвечает на разговор.*",talk:[["Марк","Он реагирует на наши голоса."],["Аня","Может, лучше вообще ничего не говорить?"],["Кирилл","Похоже, он распознаёт звуковые частоты."]]},
-{place:"Запертая дверь",action:"*В конце коридора стоит массивная дверь с кодовой панелью.*",talk:[["Марк","Нужен код."],["Кирилл","В архиве были цифры на схеме."],["Аня","Может, номер кассеты — пятнадцать?"]]},
-{place:"Код",action:"*После ввода кода панель загорается зелёным светом.*",talk:[["Аня","Она открывается!"],["Марк","Отойдите от двери."],["Кирилл","За ней находится большая камера."]]},
-{place:"Акустическая камера",action:"*В круглом зале стоят огромные металлические отражатели.*",talk:[["Кирилл","Это и есть звуковые зеркала."],["Марк","А что находится под защитным стеклом?"],["Аня","Похоже на центральный передатчик."]]},
-{place:"Центральный прибор",action:"*На старом экране появляется текущая дата.*",talk:[["Аня","Но эта станция заброшена пятнадцать лет!"],["Марк","Значит, оборудование кто-то поддерживает."],["Кирилл","Или система работает автономно."]]},
-{place:"Сообщение",action:"*На экране появляются слова: «Сигнал принят».*",talk:[["Марк","Кем принят?"],["Аня","Может быть, другой станцией?"],["Кирилл","Тогда почему координаты не отображаются?"]]},
-{place:"Ответ",action:"*Из динамика раздаётся незнакомый голос.*",talk:[["Неизвестный","Вы наконец пришли."],["Марк","Кто ты? Назови себя!"],["Неизвестный","Не позволяйте им включить передатчик."]]},
-{place:"Отключение",action:"*Прибор начинает мигать. На экране появляется предупреждение.*",talk:[["Кирилл","Передатчик запускается!"],["Аня","Как его остановить?"],["Марк","На панели справа есть переключатели!"]]},
-{place:"Выбор",action:"*На панели два переключателя и красная кнопка.*",talk:[["Кирилл","Первый блокирует питание, второй — передачу сигнала."],["Марк","Нужно выбрать, что отключить."],["Аня","Главное — не нажимать всё подряд!"]]},
-{place:"Тишина",action:"*После отключения передачи гул постепенно затихает.*",talk:[["Марк","Кажется, получилось."],["Кирилл","Мы только прервали сигнал. Система всё ещё работает."],["Аня","Значит, нам придётся сюда вернуться?"]]},
-{place:"Последняя запись",action:"*На экране появляется файл «Для тех, кто найдёт станцию».*",talk:[["Неизвестный","Если вы добрались до камеры, первая часть эксперимента завершена."],["Марк","Первая часть? Что это значит?"],["Кирилл","Нужно узнать, кто отправил это сообщение."]]},
-{place:"Продолжение следует",action:"*Друзья выходят из станции. На телефоне появляется неизвестное сообщение: «Мы знаем, что вы нашли».*",talk:[["Аня","Это ещё не конец, правда?"],["Марк","Нет. Нам нужно выяснить, кто за этим стоит."],["Кирилл","И что на самом деле произошло пятнадцать лет назад."]]}
+{place:"Берег моря",action:"*Вечер. Четверо друзей подходят к заброшенной военной станции.*",talk:[
+["Марк","Мы точно должны были прийти именно сюда?"],
+["Аня","Ты сам говорил, что хочешь узнать, что здесь произошло."],
+["Кирилл","Тише. Вы слышите этот звук?"]]},
+{place:"Вход",action:"*Ржавая дверь скрипит, когда Марк толкает её плечом.*",talk:[
+["Марк","Дверь открыта. Это уже странно."],
+["Аня","А может, мы всё-таки не будем заходить?"],
+["Кирилл","На карте вход был отмечен как закрытый."]]},
+{place:"Коридор",action:"*Внутри пахнет сыростью. На стенах висят выцветшие таблички.*",talk:[
+["Аня","Здесь будто всё застыло во времени."],
+["Марк","Смотрите под ноги. Пол местами провалился."],
+["Кирилл","В конце коридора есть ещё одна дверь."]]},
+{place:"Странный звук",action:"*Из глубины станции доносятся три коротких сигнала.*",talk:[
+["Марк","Это точно не ветер."],
+["Аня","Похоже на радиопомехи."],
+["Кирилл","Но электричество здесь отключили много лет назад."]]},
+{place:"Старая карта",action:"*За стеклом лежит пожелтевший план здания.*",talk:[
+["Кирилл","Вот восточное крыло. Там находился архив."],
+["Марк","Тогда начнём с него."],
+["Аня","Погодите. Что это за помещение без номера?"]]},
+{place:"Комната охраны",action:"*На столе лежит журнал дежурств с последней записью.*",talk:[
+["Аня","Записи резко обрываются пятнадцать лет назад."],
+["Марк","Может, станцию закрыли после аварии."],
+["Кирилл","Тогда почему в журнале нет ни слова об аварии?"]]},
+{place:"Кассета № 15",action:"*В ящике обнаруживается кассета с цифрой 15.*",talk:[
+["Марк","Кассета. Кто-нибудь захватил магнитофон?"],
+["Аня","Конечно, нет. Мы же не знали, что найдём."],
+["Кирилл","В соседней комнате был старый аппарат."]]},
+{place:"Магнитофон",action:"*Старый магнитофон щёлкает и начинает шипеть.*",talk:[
+["Аня","Если оттуда сейчас кто-нибудь заговорит, я уйду."],
+["Марк","Тише, запись начинается."],
+["Голос записи","Если вы слышите это сообщение, значит, система снова активна."]]},
+{place:"Голос на записи",action:"*Голос на кассете искажается, будто запись повреждена.*",talk:[
+["Голос записи","Не включайте передатчик после третьего сигнала."],
+["Марк","Какого передатчика?"],
+["Кирилл","Возможно, того, который всё ещё подаёт сигнал."]]},
+{place:"Третий сигнал",action:"*Станция вздрагивает от трёх громких сигналов. Свет на миг вспыхивает.*",talk:[
+["Аня","Вот они! Три сигнала!"],
+["Марк","Все назад!"],
+["Кирилл","Посмотрите на стекло. Там появилась надпись."]]},
+{place:"Надпись",action:"*На запотевшем стекле проступают слова: «Найдите источник».*",talk:[
+["Марк","Кто-то явно хочет, чтобы мы шли дальше."],
+["Аня","Или хочет заманить нас в ловушку."],
+["Кирилл","Нужно хотя бы понять, откуда идёт сигнал."]]},
+{place:"Восточное крыло",action:"*Друзья идут по коридору, следуя за тихим гулом.*",talk:[
+["Аня","Звук становится громче."],
+["Марк","Он идёт не из комнаты, а будто из-за стены."],
+["Кирилл","Значит, там может быть скрытый проход."]]},
+{place:"Скрытая панель",action:"*Кирилл замечает металлическую пластину в стене.*",talk:[
+["Кирилл","На ней тот же символ, что и на кассете."],
+["Марк","Попробуем нажать?"],
+["Аня","Только аккуратно, пожалуйста."]]},
+{place:"Архив",action:"*За панелью обнаруживается небольшая дверь в архив.*",talk:[
+["Марк","Вот почему его нет на карте."],
+["Аня","Сколько же здесь папок!"],
+["Кирилл","Нам нужна информация о пятнадцатой кассете."]]},
+{place:"Дело № 15",action:"*В папке лежат схемы станции и фотографии странных металлических конструкций.*",talk:[
+["Аня","На снимках станция выглядит совершенно новой."],
+["Кирилл","Это звуковые зеркала. Они направляли звуковые волны."],
+["Марк","И все они направлены в одну точку."]]},
+{place:"Звуковые зеркала",action:"*На схеме отмечена круглая камера под зданием.*",talk:[
+["Кирилл","Источник сигнала находится внизу."],
+["Аня","А мы всё это время слышали его с поверхности?"],
+["Марк","Тогда нам нужно найти лестницу."]]},
+{place:"Лестница вниз",action:"*За архивом находится узкая лестница, уходящая в темноту.*",talk:[
+["Аня","Почему мне кажется, что это плохая идея?"],
+["Марк","Потому что мы ничего не знаем об этом месте."],
+["Кирилл","Будем держаться вместе."]]},
+{place:"Нижний уровень",action:"*Внизу холоднее. По стенам тянутся старые кабели.*",talk:[
+["Кирилл","Система всё ещё получает питание."],
+["Марк","Но откуда?"],
+["Аня","Смотрите, там прибор с мигающим экраном!"]]},
+{place:"Чужой ответ",action:"*Прибор издаёт два сигнала, словно отвечает на разговор.*",talk:[
+["Марк","Он реагирует на наши голоса."],
+["Аня","Может, лучше вообще ничего не говорить?"],
+["Кирилл","Похоже, он распознаёт звуковые частоты."]]},
+{place:"Запертая дверь",action:"*В конце коридора стоит массивная дверь с кодовой панелью.*",talk:[
+["Марк","Нужен код."],
+["Кирилл","В архиве были цифры на схеме."],
+["Аня","Может, номер кассеты — пятнадцать?"]]},
+{place:"Код",action:"*После ввода кода панель загорается зелёным светом.*",talk:[
+["Аня","Она открывается!"],
+["Марк","Отойдите от двери."],
+["Кирилл","За ней находится большая камера."]]},
+{place:"Акустическая камера",action:"*В круглом зале стоят огромные металлические отражатели.*",talk:[
+["Кирилл","Это и есть звуковые зеркала."],
+["Марк","А что находится под защитным стеклом?"],
+["Аня","Похоже на центральный передатчик."]]},
+{place:"Центральный прибор",action:"*На старом экране появляется текущая дата.*",talk:[
+["Аня","Но эта станция заброшена пятнадцать лет!"],
+["Марк","Значит, оборудование кто-то поддерживает."],
+["Кирилл","Или система работает автономно."]]},
+{place:"Сообщение",action:"*На экране появляются слова: «Сигнал принят».*",talk:[
+["Марк","Кем принят?"],
+["Аня","Может быть, другой станцией?"],
+["Кирилл","Тогда почему координаты не отображаются?"]]},
+{place:"Ответ",action:"*Из динамика раздаётся незнакомый голос.*",talk:[
+["Неизвестный","Вы наконец пришли."],
+["Марк","Кто ты? Назови себя!"],
+["Неизвестный","Не позволяйте им включить передатчик."]]},
+{place:"Отключение",action:"*Прибор начинает мигать. На экране появляется предупреждение.*",talk:[
+["Кирилл","Передатчик запускается!"],
+["Аня","Как его остановить?"],
+["Марк","На панели справа есть переключатели!"]]},
+{place:"Выбор",action:"*На панели два переключателя и красная кнопка.*",talk:[
+["Кирилл","Первый блокирует питание, второй — передачу сигнала."],
+["Марк","Нужно выбрать, что отключить."],
+["Аня","Главное — не нажимать всё подряд!"]]},
+{place:"Тишина",action:"*После отключения передачи гул постепенно затихает.*",talk:[
+["Марк","Кажется, получилось."],
+["Кирилл","Мы только прервали сигнал. Система всё ещё работает."],
+["Аня","Значит, нам придётся сюда вернуться?"]]},
+{place:"Последняя запись",action:"*На экране появляется файл «Для тех, кто найдёт станцию».*",talk:[
+["Неизвестный","Если вы добрались до камеры, первая часть эксперимента завершена."],
+["Марк","Первая часть? Что это значит?"],
+["Кирилл","Нужно узнать, кто отправил это сообщение."]]},
+{place:"Продолжение следует",action:"*Друзья выходят из станции. На телефоне появляется неизвестное сообщение: «Мы знаем, что вы нашли».*",talk:[
+["Аня","Это ещё не конец, правда?"],
+["Марк","Нет. Нам нужно выяснить, кто за этим стоит."],
+["Кирилл","И что на самом деле произошло пятнадцать лет назад."]]}
 ];
 
-let state={scene:0,line:0,log:[],finished:false};
-let timer=null;
-let recognition=null;
-
+let state={scene:0,line:0,waiting:false,log:[]};
 const $=id=>document.getElementById(id);
 const story=$("story");
 const icons={Марк:"🧭",Аня:"🔦",Кирилл:"📡","Голос записи":"📼","Неизвестный":"❔","Лина":"🌊"};
 
 function bubble(name,text){
  const row=document.createElement("div");
- row.className="message"+(name==="Лина"?" mine":"");
+ row.className="message";
  const av=document.createElement("div");
  av.className="avatar";
  av.textContent=icons[name]||"💬";
@@ -129,6 +2080,7 @@ function bubble(name,text){
  box.append(label,msg);
  row.append(av,box);
  story.append(row);
+ story.scrollTop=story.scrollHeight;
 }
 function action(text){
  const el=document.createElement("div");
@@ -136,180 +2088,468 @@ function action(text){
  el.textContent=text;
  story.append(el);
 }
-function save(show=true){
- try{
-  localStorage.setItem(SAVE_KEY,JSON.stringify(state));
-  if(show)$("status").textContent="Прогресс сохранён.";
- }catch(e){
-  $("status").textContent="Не удалось сохранить прогресс.";
- }
-}
-function addMessage(name,text){
- state.log.push({scene:state.scene,name,text});
-}
-function addAction(text){
- state.log.push({scene:state.scene,action:true,text});
+function save(){
+ localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+ $("status").textContent="Прогресс сохранён автоматически.";
 }
 function render(){
  story.innerHTML="";
  const s=scenes[state.scene];
- $("place").textContent=s?s.place:"Продолжение следует…";
- $("chapter").textContent=s?
-  `Глава 1 · Сцена ${state.scene+1} из ${scenes.length}`:
-  "Глава 1 завершена";
+ $("place").textContent=s?s.place:"Глава завершена";
+ $("chapter").textContent=s?`Глава 1 · Сцена ${state.scene+1} из ${scenes.length}`:"Глава 1 завершена";
  state.log.forEach(m=>{
-  if(m.scene!==state.scene)return;
-  if(m.action)action(m.text);
-  else bubble(m.name,m.text);
+  if(m.scene===state.scene){
+   if(m.type==="action")action(m.text);
+   else bubble(m.name,m.text);
+  }
  });
- story.scrollTop=story.scrollHeight;
- $("inputPanel").hidden=!s;
- $("reply").disabled=!s;
- $("send").disabled=!s;
- $("voice").disabled=!s;
- $("nextChapter").disabled=!!s;
- if(s){
-  $("turn").textContent="Ты играешь за Лину. Можешь написать сообщение в любой момент.";
+ if(!s){
+  action("*Продолжение следует…*");
+  $("inputPanel").hidden=true;
+  $("nextChapter").disabled=true;
+  save();
+  return;
  }
- save(false);
+ $("inputPanel").hidden=false;
+ $("turn").textContent=state.waiting?"Твой ход — ты играешь за Лину.":"Читаем историю…";
+ $("reply").placeholder="Напиши сообщение от лица Лины...";
+ $("send").disabled=!state.waiting;
+ $("reply").disabled=!state.waiting;
+ $("continue").disabled=state.waiting;
+ save();
 }
-function scheduleNext(){
- clearTimeout(timer);
- if(state.finished)return;
- timer=setTimeout(showNext,2800);
+function addAction(text){
+ state.log.push({scene:state.scene,type:"action",text});
 }
-function showNext(){
- clearTimeout(timer);
+function addBubble(name,text){
+ state.log.push({scene:state.scene,type:"message",name,text});
+}
+function startScene(){
  const s=scenes[state.scene];
  if(!s)return;
+ if(state.line===0&&!state.log.some(m=>m.scene===state.scene)){
+  addAction(s.action);
+ }
  if(state.line<s.talk.length){
   const [name,text]=s.talk[state.line];
-  addMessage(name,text);
+  addBubble(name,text);
   state.line++;
-  render();
-  scheduleNext();
+  if(state.line===s.talk.length)state.waiting=true;
+ }else{
+  state.waiting=true;
+ }
+ render();
+}
+function answer(text){
+ addBubble("Лина",text);
+ const t=text.toLowerCase();
+ let name="Марк",msg="Давайте продолжим осмотр. Здесь ещё многое предстоит узнать.";
+ if(/страш|боюсь|жутк|опасно/.test(t)){
+  name="Аня";msg="Мне тоже тревожно. Давайте держаться вместе.";
+ }else if(/кто|голос|человек|сообщ/.test(t)){
+  name="Кирилл";msg="Пока неизвестно. Нужно найти больше информации.";
+ }else if(/сигнал|звук|радио|кассет/.test(t)){
+  name="Марк";msg="Это может быть связано с экспериментом. Продолжим искать.";
+ }else if(/уйти|назад|домой/.test(t)){
+  name="Аня";msg="Я бы тоже хотела вернуться, но сначала нужно разобраться.";
+ }else if(/давай|вместе|пойдём|идём/.test(t)){
+  name="Кирилл";msg="Согласен. Будем действовать осторожно.";
+ }
+ addBubble(name,msg);
+ state.waiting=false;
+ render();
+}
+$("send").onclick=()=>{
+ const text=$("reply").value.trim();
+ if(!text||!state.waiting)return;
+ $("reply").va<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Частота — интерактивная история</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10131d;color:#f1f2fa;font:16px Arial,sans-serif}
+header{padding:20px;text-align:center;background:#191e2d;border-bottom:1px solid #343b50}
+h1{margin:0;color:#c5b5ff;font-size:27px}
+header p{color:#aab1c9;margin:8px 0 0}
+main{max-width:760px;margin:auto;padding:14px}
+.panel{background:#191e2d;border:1px solid #30374c;border-radius:15px;padding:14px;margin-bottom:13px}
+#place{color:#c5b5ff;font-weight:bold}
+#chapter{font-size:13px;color:#aab1c9;margin-top:7px}
+#story{min-height:250px;max-height:55vh;overflow-y:auto}
+.message{display:flex;gap:10px;margin:14px 0;align-items:flex-start}
+.avatar{width:43px;height:43px;flex-shrink:0;border-radius:50%;background:#343957;display:grid;place-items:center;font-size:21px}
+.bubble{background:#252c40;padding:11px 13px;border-radius:4px 14px 14px 14px;line-height:1.5;overflow-wrap:anywhere;flex:1}
+.name{font-size:12px;color:#c5b5ff;margin-bottom:5px}
+.action{font-style:italic;color:#b6bed5;line-height:1.5;margin:13px 0}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+button{border:0;border-radius:10px;padding:12px 15px;background:#7866ca;color:white;font-size:14px;cursor:pointer}
+button.secondary{background:#30374c}
+button.danger{background:#8f405a}
+button:disabled{opacity:.4}
+input{width:100%;background:#101522;color:white;border:1px solid #414963;border-radius:10px;padding:13px;font-size:16px;margin:8px 0}
+#status{font-size:12px;color:#aab1c9;margin-top:10px}
+#turn{color:#c5b5ff;font-size:14px;margin-bottom:8px}
+footer{text-align:center;color:#aab1c9;font-size:12px;padding:18px}
+</style>
+</head>
+<body>
+<header>
+<h1>Частота</h1>
+<p>Интерактивная история</p>
+</header>
+
+<main>
+<section class="panel">
+<div id="place">Берег моря</div>
+<div id="chapter">Глава 1 · Сцена 1 из 30</div>
+</section>
+
+<section class="panel" id="story"></section>
+
+<section class="panel" id="inputPanel">
+<div id="turn">Сейчас твой ход — ты играешь за Лину.</div>
+<input id="reply" placeholder="Напиши сообщение от лица Лины..." autocomplete="off">
+<div class="controls">
+<button id="send">Отправить</button>
+<button id="continue" class="secondary">Продолжить →</button>
+</div>
+<div id="status">Прогресс сохраняется автоматически.</div>
+</section>
+
+<section class="panel">
+<div class="controls">
+<button class="secondary" id="save">Сохранить</button>
+<button class="danger" id="reset">Пройти заново</button>
+<button class="secondary" id="nextChapter" disabled>Следующая глава (скоро)</button>
+</div>
+</section>
+<footer>Ты — Лина. История продолжается вместе с тобой.</footer>
+</main>
+
+<script>
+const SAVE_KEY="frequency_story_v3";
+
+const scenes=[
+{place:"Берег моря",action:"*Вечер. Четверо друзей подходят к заброшенной военной станции.*",talk:[
+["Марк","Мы точно должны были прийти именно сюда?"],
+["Аня","Ты сам говорил, что хочешь узнать, что здесь произошло."],
+["Кирилл","Тише. Вы слышите этот звук?"]]},
+{place:"Вход",action:"*Ржавая дверь скрипит, когда Марк толкает её плечом.*",talk:[
+["Марк","Дверь открыта. Это уже странно."],
+["Аня","А может, мы всё-таки не будем заходить?"],
+["Кирилл","На карте вход был отмечен как закрытый."]]},
+{place:"Коридор",action:"*Внутри пахнет сыростью. На стенах висят выцветшие таблички.*",talk:[
+["Аня","Здесь будто всё застыло во времени."],
+["Марк","Смотрите под ноги. Пол местами провалился."],
+["Кирилл","В конце коридора есть ещё одна дверь."]]},
+{place:"Странный звук",action:"*Из глубины станции доносятся три коротких сигнала.*",talk:[
+["Марк","Это точно не ветер."],
+["Аня","Похоже на радиопомехи."],
+["Кирилл","Но электричество здесь отключили много лет назад."]]},
+{place:"Старая карта",action:"*За стеклом лежит пожелтевший план здания.*",talk:[
+["Кирилл","Вот восточное крыло. Там находился архив."],
+["Марк","Тогда начнём с него."],
+["Аня","Погодите. Что это за помещение без номера?"]]},
+{place:"Комната охраны",action:"*На столе лежит журнал дежурств с последней записью.*",talk:[
+["Аня","Записи резко обрываются пятнадцать лет назад."],
+["Марк","Может, станцию закрыли после аварии."],
+["Кирилл","Тогда почему в журнале нет ни слова об аварии?"]]},
+{place:"Кассета № 15",action:"*В ящике обнаруживается кассета с цифрой 15.*",talk:[
+["Марк","Кассета. Кто-нибудь захватил магнитофон?"],
+["Аня","Конечно, нет. Мы же не знали, что найдём."],
+["Кирилл","В соседней комнате был старый аппарат."]]},
+{place:"Магнитофон",action:"*Старый магнитофон щёлкает и начинает шипеть.*",talk:[
+["Аня","Если оттуда сейчас кто-нибудь заговорит, я уйду."],
+["Марк","Тише, запись начинается."],
+["Голос записи","Если вы слышите это сообщение, значит, система снова активна."]]},
+{place:"Голос на записи",action:"*Голос на кассете искажается, будто запись повреждена.*",talk:[
+["Голос записи","Не включайте передатчик после третьего сигнала."],
+["Марк","Какого передатчика?"],
+["Кирилл","Возможно, того, который всё ещё подаёт сигнал."]]},
+{place:"Третий сигнал",action:"*Станция вздрагивает от трёх громких сигналов. Свет на миг вспыхивает.*",talk:[
+["Аня","Вот они! Три сигнала!"],
+["Марк","Все назад!"],
+["Кирилл","Посмотрите на стекло. Там появилась надпись."]]},
+{place:"Надпись",action:"*На запотевшем стекле проступают слова: «Найдите источник».*",talk:[
+["Марк","Кто-то явно хочет, чтобы мы шли дальше."],
+["Аня","Или хочет заманить нас в ловушку."],
+["Кирилл","Нужно хотя бы понять, откуда идёт сигнал."]]},
+{place:"Восточное крыло",action:"*Друзья идут по коридору, следуя за тихим гулом.*",talk:[
+["Аня","Звук становится громче."],
+["Марк","Он идёт не из комнаты, а будто из-за стены."],
+["Кирилл","Значит, там может быть скрытый проход."]]},
+{place:"Скрытая панель",action:"*Кирилл замечает металлическую пластину в стене.*",talk:[
+["Кирилл","На ней тот же символ, что и на кассете."],
+["Марк","Попробуем нажать?"],
+["Аня","Только аккуратно, пожалуйста."]]},
+{place:"Архив",action:"*За панелью обнаруживается небольшая дверь в архив.*",talk:[
+["Марк","Вот почему его нет на карте."],
+["Аня","Сколько же здесь папок!"],
+["Кирилл","Нам нужна информация о пятнадцатой кассете."]]},
+{place:"Дело № 15",action:"*В папке лежат схемы станции и фотографии странных металлических конструкций.*",talk:[
+["Аня","На снимках станция выглядит совершенно новой."],
+["Кирилл","Это звуковые зеркала. Они направляли звуковые волны."],
+["Марк","И все они направлены в одну точку."]]},
+{place:"Звуковые зеркала",action:"*На схеме отмечена круглая камера под зданием.*",talk:[
+["Кирилл","Источник сигнала находится внизу."],
+["Аня","А мы всё это время слышали его с поверхности?"],
+["Марк","Тогда нам нужно найти лестницу."]]},
+{place:"Лестница вниз",action:"*За архивом находится узкая лестница, уходящая в темноту.*",talk:[
+["Аня","Почему мне кажется, что это плохая идея?"],
+["Марк","Потому что мы ничего не знаем об этом месте."],
+["Кирилл","Будем держаться вместе."]]},
+{place:"Нижний уровень",action:"*Внизу холоднее. По стенам тянутся старые кабели.*",talk:[
+["Кирилл","Система всё ещё получает питание."],
+["Марк","Но откуда?"],
+["Аня","Смотрите, там прибор с мигающим экраном!"]]},
+{place:"Чужой ответ",action:"*Прибор издаёт два сигнала, словно отвечает на разговор.*",talk:[
+["Марк","Он реагирует на наши голоса."],
+["Аня","Может, лучше вообще ничего не говорить?"],
+["Кирилл","Похоже, он распознаёт звуковые частоты."]]},
+{place:"Запертая дверь",action:"*В конце коридора стоит массивная дверь с кодовой панелью.*",talk:[
+["Марк","Нужен код."],
+["Кирилл","В архиве были цифры на схеме."],
+["Аня","Может, номер кассеты — пятнадцать?"]]},
+{place:"Код",action:"*После ввода кода панель загорается зелёным светом.*",talk:[
+["Аня","Она открывается!"],
+["Марк","Отойдите от двери."],
+["Кирилл","За ней находится большая камера."]]},
+{place:"Акустическая камера",action:"*В круглом зале стоят огромные металлические отражатели.*",talk:[
+["Кирилл","Это и есть звуковые зеркала."],
+["Марк","А что находится под защитным стеклом?"],
+["Аня","Похоже на центральный передатчик."]]},
+{place:"Центральный прибор",action:"*На старом экране появляется текущая дата.*",talk:[
+["Аня","Но эта станция заброшена пятнадцать лет!"],
+["Марк","Значит, оборудование кто-то поддерживает."],
+["Кирилл","Или система работает автономно."]]},
+{place:"Сообщение",action:"*На экране появляются слова: «Сигнал принят».*",talk:[
+["Марк","Кем принят?"],
+["Аня","Может быть, другой станцией?"],
+["Кирилл","Тогда почему координаты не отображаются?"]]},
+{place:"Ответ",action:"*Из динамика раздаётся незнакомый голос.*",talk:[
+["Неизвестный","Вы наконец пришли."],
+["Марк","Кто ты? Назови себя!"],
+["Неизвестный","Не позволяйте им включить передатчик."]]},
+{place:"Отключение",action:"*Прибор начинает мигать. На экране появляется предупреждение.*",talk:[
+["Кирилл","Передатчик запускается!"],
+["Аня","Как его остановить?"],
+["Марк","На панели справа есть переключатели!"]]},
+{place:"Выбор",action:"*На панели два переключателя и красная кнопка.*",talk:[
+["Кирилл","Первый блокирует питание, второй — передачу сигнала."],
+["Марк","Нужно выбрать, что отключить."],
+["Аня","Главное — не нажимать всё подряд!"]]},
+{place:"Тишина",action:"*После отключения передачи гул постепенно затихает.*",talk:[
+["Марк","Кажется, получилось."],
+["Кирилл","Мы только прервали сигнал. Система всё ещё работает."],
+["Аня","Значит, нам придётся сюда вернуться?"]]},
+{place:"Последняя запись",action:"*На экране появляется файл «Для тех, кто найдёт станцию».*",talk:[
+["Неизвестный","Если вы добрались до камеры, первая часть эксперимента завершена."],
+["Марк","Первая часть? Что это значит?"],
+["Кирилл","Нужно узнать, кто отправил это сообщение."]]},
+{place:"Продолжение следует",action:"*Друзья выходят из станции. На телефоне появляется неизвестное сообщение: «Мы знаем, что вы нашли».*",talk:[
+["Аня","Это ещё не конец, правда?"],
+["Марк","Нет. Нам нужно выяснить, кто за этим стоит."],
+["Кирилл","И что на самом деле произошло пятнадцать лет назад."]]}
+];
+
+let state={scene:0,line:0,waiting:false,log:[]};
+const $=id=>document.getElementById(id);
+const story=$("story");
+const icons={Марк:"🧭",Аня:"🔦",Кирилл:"📡","Голос записи":"📼","Неизвестный":"❔","Лина":"🌊"};
+
+function bubble(name,text){
+ const row=document.createElement("div");
+ row.className="message";
+ const av=document.createElement("div");
+ av.className="avatar";
+ av.textContent=icons[name]||"💬";
+ const box=document.createElement("div");
+ box.className="bubble";
+ const label=document.createElement("div");
+ label.className="name";
+ label.textContent=name;
+ const msg=document.createElement("div");
+ msg.textContent=text;
+ box.append(label,msg);
+ row.append(av,box);
+ story.append(row);
+ story.scrollTop=story.scrollHeight;
+}
+function action(text){
+ const el=document.createElement("div");
+ el.className="action";
+ el.textContent=text;
+ story.append(el);
+}
+function save(){
+ localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+ $("status").textContent="Прогресс сохранён автоматически.";
+}
+function render(){
+ story.innerHTML="";
+ const s=scenes[state.scene];
+ $("place").textContent=s?s.place:"Глава завершена";
+ $("chapter").textContent=s?`Глава 1 · Сцена ${state.scene+1} из ${scenes.length}`:"Глава 1 завершена";
+ state.log.forEach(m=>{
+  if(m.scene===state.scene){
+   if(m.type==="action")action(m.text);
+   else bubble(m.name,m.text);
+  }
+ });
+ if(!s){
+  action("*Продолжение следует…*");
+  $("inputPanel").hidden=true;
+  $("nextChapter").disabled=true;
+  save();
+  return;
+ }
+ $("inputPanel").hidden=false;
+ $("turn").textContent=state.waiting?"Твой ход — ты играешь за Лину.":"Читаем историю…";
+ $("reply").placeholder="Напиши сообщение от лица Лины...";
+ $("send").disabled=!state.waiting;
+ $("reply").disabled=!state.waiting;
+ $("continue").disabled=state.waiting;
+ save();
+}
+function addAction(text){
+ state.log.push({scene:state.scene,type:"action",text});
+}
+function addBubble(name,text){
+ state.log.push({scene:state.scene,type:"message",name,text});
+}
+function startScene(){
+ const s=scenes[state.scene];
+ if(!s)return;
+ if(state.line===0&&!state.log.some(m=>m.scene===state.scene)){
+  addAction(s.action);
+ }
+ if(state.line<s.talk.length){
+  const [name,text]=s.talk[state.line];
+  addBubble(name,text);
+  state.line++;
+  if(state.line===s.talk.length)state.waiting=true;
+ }else{
+  state.waiting=true;
+ }
+ render();
+}
+function answer(text){
+ addBubble("Лина",text);
+ const t=text.toLowerCase();
+ let name="Марк",msg="Давайте продолжим осмотр. Здесь ещё многое предстоит узнать.";
+ if(/страш|боюсь|жутк|опасно/.test(t)){
+  name="Аня";msg="Мне тоже тревожно. Давайте держаться вместе.";
+ }else if(/кто|голос|человек|сообщ/.test(t)){
+  name="Кирилл";msg="Пока неизвестно. Нужно найти больше информации.";
+ }else if(/сигнал|звук|радио|кассет/.test(t)){
+  name="Марк";msg="Это может быть связано с экспериментом. Продолжим искать.";
+ }else if(/уйти|назад|домой/.test(t)){
+  name="Аня";msg="Я бы тоже хотела вернуться, но сначала нужно разобраться.";
+ }else if(/давай|вместе|пойдём|идём/.test(t)){
+  name="Кирилл";msg="Согласен. Будем действовать осторожно.";
+ }
+ addBubble(name,msg);
+ state.waiting=false;
+ render();
+}
+$("send").onclick=()=>{
+ const text=$("reply").value.trim();
+ if(!text||!state.waiting)return;
+ $("reply").value="";
+ answer(text);
+};
+$("reply").addEventListener("keydown",e=>{
+ if(e.key==="Enter")$("send").click();
+});
+$("continue").onclick=()=>{
+ if(state.waiting)return;
+ const s=scenes[state.scene];
+ if(state.line<s.talk.length){
+  startScene();
  }else{
   state.scene++;
   state.line=0;
+  state.waiting=false;
   if(state.scene>=scenes.length){
-   state.finished=true;
    render();
-   action("*Продолжение следует…*");
-   save(false);
-   return;
+  }else{
+   startScene();
   }
-  addAction(scenes[state.scene].action);
-  render();
-  scheduleNext();
- }
-}
-function start(){
- clearTimeout(timer);
- const s=scenes[state.scene];
- if(!s){
-  state.finished=true;
-  render();
-  return;
- }
- if(!state.log.some(m=>m.scene===state.scene&&m.action)){
-  addAction(s.action);
- }
- render();
- if(state.line<s.talk.length)scheduleNext();
- else scheduleNext();
-}
-function answer(text){
- text=text.trim();
- if(!text||state.finished)return;
- clearTimeout(timer);
- addMessage("Лина",text);
- const t=text.toLowerCase();
- let name="Марк";
- let msg="Давайте продолжим осмотр. Здесь ещё многое предстоит узнать.";
- if(/страш|боюсь|жутк|опасно/.test(t)){
-  name="Аня";
-  msg="Мне тоже тревожно. Давайте держаться вместе.";
- }else if(/кто|голос|человек|сообщ/.test(t)){
-  name="Кирилл";
-  msg="Пока неизвестно. Нужно найти больше информации.";
- }else if(/сигнал|звук|радио|кассет/.test(t)){
-  name="Марк";
-  msg="Это может быть связано с экспериментом. Продолжим искать.";
- }else if(/уйти|назад|домой/.test(t)){
-  name="Аня";
-  msg="Я бы тоже хотела вернуться, но сначала нужно разобраться.";
- }else if(/давай|вместе|пойдём|идём/.test(t)){
-  name="Кирилл";
-  msg="Согласен. Будем действовать осторожно.";
- }else if(/да|ага|ладно|хорошо/.test(t)){
-  name="Марк";
-  msg="Хорошо. Тогда не будем терять время.";
- }
- addMessage(name,msg);
- $("reply").value="";
- render();
- $("reply").focus();
- scheduleNext();
-}
-$("send").onclick=()=>answer($("reply").value);
-$("reply").addEventListener("keydown",e=>{
- if(e.key==="Enter"){
-  e.preventDefault();
-  $("send").click();
- }
-});
-$("voice").onclick=()=>{
- const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SpeechRecognition){
-  $("status").textContent="Голосовой ввод не поддерживается. Попробуй микрофон на клавиатуре.";
-  return;
- }
- try{
-  recognition=new SpeechRecognition();
-  recognition.lang="ru-RU";
-  recognition.interimResults=false;
-  recognition.onstart=()=>$("status").textContent="Говори — речь появится в поле сообщения.";
-  recognition.onresult=e=>{
-   $("reply").value+=($("reply").value?" ":"")+e.results[0][0].transcript;
-   $("status").textContent="Проверь текст и нажми «Отправить сообщение».";
-  };
-  recognition.onerror=()=>$("status").textContent="Не удалось распознать речь. Проверь разрешение на микрофон.";
-  recognition.start();
- }catch(e){
-  $("status").textContent="Не удалось включить микрофон.";
  }
 };
-$("save").onclick=()=>save(true);
+$("save").onclick=save;
 $("reset").onclick=()=>{
- if(!confirm("Начать историю заново? Сохранённый прогресс будет удалён."))return;
- clearTimeout(timer);
- localStorage.removeItem(SAVE_KEY);
- state={scene:0,line:0,log:[],finished:false};
- start();
- $("status").textContent="История начата заново.";
-};
-$("nextChapter").onclick=()=>{
- if(!state.finished){
-  alert("Сначала закончи первую главу.");
-  return;
+ if(confirm("Начать историю заново? Сохранённый прогресс будет удалён.")){
+  localStorage.removeItem(SAVE_KEY);
+  state={scene:0,line:0,waiting:false,log:[]};
+  startScene();
  }
- alert("Вторая глава пока не добавлена. Продолжение следует…");
 };
 function load(){
  try{
   const data=JSON.parse(localStorage.getItem(SAVE_KEY));
-  if(data&&Number.isInteger(data.scene)&&Array.isArray(data.log)&&
-     data.scene>=0&&data.scene<=scenes.length){
+  if(data&&Number.isInteger(data.scene)&&Array.isArray(data.log)){
    state={...state,...data};
-   render();
-   if(!state.finished)scheduleNext();
-   else{
-    action("*Продолжение следует…*");
+   if(state.scene>=scenes.length){
+    render();
+   }else{
+    render();
    }
    return;
   }
  }catch(e){}
- start();
+ startScene();
+}
+load();
+</script>
+</body>
+ </html>lue="";
+ answer(text);
+};
+$("reply").addEventListener("keydown",e=>{
+ if(e.key==="Enter")$("send").click();
+});
+$("continue").onclick=()=>{
+ if(state.waiting)return;
+ const s=scenes[state.scene];
+ if(state.line<s.talk.length){
+  startScene();
+ }else{
+  state.scene++;
+  state.line=0;
+  state.waiting=false;
+  if(state.scene>=scenes.length){
+   render();
+  }else{
+   startScene();
+  }
+ }
+};
+$("save").onclick=save;
+$("reset").onclick=()=>{
+ if(confirm("Начать историю заново? Сохранённый прогресс будет удалён.")){
+  localStorage.removeItem(SAVE_KEY);
+  state={scene:0,line:0,waiting:false,log:[]};
+  startScene();
+ }
+};
+function load(){
+ try{
+  const data=JSON.parse(localStorage.getItem(SAVE_KEY));
+  if(data&&Number.isInteger(data.scene)&&Array.isArray(data.log)){
+   state={...state,...data};
+   if(state.scene>=scenes.length){
+    render();
+   }else{
+    render();
+   }
+   return;
+  }
+ }catch(e){}
+ startScene();
 }
 load();
 </script>
